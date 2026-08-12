@@ -37,7 +37,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('任务详情'), findsOneWidget);
-    expect(find.text('档案：ledger-approval.md'), findsOneWidget);
+    expect(
+      find.text('以审批为事实源，为业务系统提供可信记录：账本记录 → 配套审批 → 对账一致。'),
+      findsOneWidget,
+    );
 
     await tester.pageBack();
     await tester.pumpAndSettle();

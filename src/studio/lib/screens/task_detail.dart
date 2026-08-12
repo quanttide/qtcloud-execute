@@ -90,10 +90,6 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                 avatar: const Icon(Icons.link, size: 16),
                 label: Text('依赖：$_dependsOnName'),
               ),
-            Chip(
-              avatar: const Icon(Icons.description_outlined, size: 16),
-              label: Text('档案：${task.doc}'),
-            ),
           ],
         ),
         TaskArchiveView(task: task),
