@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../models/task.dart';
-import '../widgets/task_archive.dart';
 import '../widgets/task_sections.dart';
 
 /// 任务清单页：加载任务档案列表
@@ -71,7 +70,7 @@ class _TasksScreenState extends State<TasksScreen> {
   }
 }
 
-/// 任务卡片：点击进入任务档案详情
+/// 任务卡片：概览任务名、依赖与目标，点击进入档案详情
 class _TaskCard extends StatelessWidget {
   const _TaskCard({required this.task, this.dependsOnName});
 
@@ -117,8 +116,13 @@ class _TaskCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              TaskArchiveView(task: task),
+              const SizedBox(height: 8),
+              Text(
+                task.goal,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
             ],
           ),
         ),
