@@ -1,0 +1,51 @@
+name: Deploy Studio to OSS
+
+on:
+  push:
+    tags:
+      - 'studio/*'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.8'
+
+      - run: cd src/studio && flutter pub get
+      - run: cd src/studio && flutter build web --dart-define=APP_VERSION=${GITHUB_REF_NAME#studio/}
+
+      - uses: manyuanrong/setup-ossutil@v3.0
+        with:
+          endpoint: oss-cn-hangzhou.aliyuncs.com
+          access-key-id: ${{ secrets.ALIYUN_ACCESS_KEY_ID }}
+          access-key-secret: ${{ secrets.ALIYUN_ACCESS_KEY_SECRET }}
+
+      # 长缓存：Flutter 产物文件名含内容哈希，可放心 max-age=31536000
+      - name: Upload to OSS
+        run: ossutil cp src/studio/build/web/ oss://qtcloud-execute-studio/ -r -f --meta=Cache-Control:public,max-age=31536000
+
+      # seed 数据（assets/data/）无内容哈希：长缓存会导致页面数据更新不生效，改用短缓存
+      - name: Upload seed data with short cache
+        run: ossutil cp src/studio/build/web/assets/assets/data/ oss://qtcloud-execute-studio/assets/assets/data/ -r -f --meta=Cache-Control:public,max-age=60
+
+      - name: Refresh CDN
+        run: |
+          pip install aliyun-python-sdk-cdn
+          python -c "
+          from aliyunsdkcore.client import AcsClient
+          from aliyunsdkcdn.request.v20180510.RefreshObjectCachesRequest import RefreshObjectCachesRequest
+          import os
+          cli = AcsClient(os.environ['ALIYUN_ACCESS_KEY_ID'], os.environ['ALIYUN_ACCESS_KEY_SECRET'], 'cn-hangzhou')
+          for domain in ['execute.cloud.quanttide.com']:
+              req = RefreshObjectCachesRequest()
+              req.set_ObjectPath(f'https://{domain}/')
+              req.set_ObjectType('Directory')
+              cli.do_action_with_exception(req)
+          "
+        env:
+          ALIYUN_ACCESS_KEY_ID: ${{ secrets.ALIYUN_ACCESS_KEY_ID }}
+          ALIYUN_ACCESS_KEY_SECRET: ${{ secrets.ALIYUN_ACCESS_KEY_SECRET }}
