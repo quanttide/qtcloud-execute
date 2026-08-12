@@ -35,6 +35,13 @@ resource "alicloud_oss_bucket" "studio" {
   }
 }
 
+# 新桶默认开启桶级 BlockPublicAccess，会屏蔽 public-read（2026-08-12 踩坑）
+# 需显式关闭，否则静态站点直连/CDN 回源返回 403 AccessDenied
+resource "alicloud_oss_bucket_public_access_block" "studio" {
+  bucket              = alicloud_oss_bucket.studio.bucket
+  block_public_access = false
+}
+
 # ============================================================
 # CDN 域名：execute.cloud.quanttide.com
 # 前置条件：
