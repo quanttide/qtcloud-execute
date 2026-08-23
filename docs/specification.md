@@ -31,7 +31,7 @@
 Task（任务）              —— 一个事项，最小单元
   ├── title（标题——一句话概括）
   ├── description（描述——展开细节）
-  ├── status（待办/进行中/blocked/完成）
+  ├── status（未开始/进行中/评审中/已完成）
   └── priority（紧急/高/中/低——AI 建议 + 人确认）
 
 TaskList（任务清单）       —— 一组任务的容器
