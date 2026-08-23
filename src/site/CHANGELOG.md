@@ -4,6 +4,13 @@
 > `qtcloud-devops release --version site/vX.Y.Z --changelog src/site/CHANGELOG.md`，
 > 推送 `site/*` tag 会触发 `.github/workflows/deploy-site.yml`（构建 → 上传 OSS → 刷新 CDN）。
 
+## [0.1.0-alpha.2] - 2026-08-23
+
+### Added
+
+- 介绍页增加通向 studio 的入口：hero 主 CTA「进入执行云」+ footer「进入工作台」
+  （跳转 `https://studio.execute.cloud.quanttide.com`）
+
 ## [0.1.0-alpha.1] - 2026-08-23
 
 ### Added
