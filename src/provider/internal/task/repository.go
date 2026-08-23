@@ -10,7 +10,7 @@ import (
 	"github.com/quanttide/qtcloud-execute-provider/internal/store"
 )
 
-// 任务状态（对齐 seed_tasks.json 取值）
+// 任务状态（对齐 tasks.json 取值）
 const (
 	StatusNotStarted = "notStarted"
 	StatusInProgress = "inProgress"
@@ -18,7 +18,7 @@ const (
 	StatusDone       = "done"
 )
 
-// 任务优先级（对齐 seed_tasks.json 取值）
+// 任务优先级（对齐 tasks.json 取值）
 const (
 	PriorityUrgent = "urgent"
 	PriorityHigh   = "high"

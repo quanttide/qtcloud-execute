@@ -4,26 +4,35 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 
-import 'data/seed_tasks.dart';
 import 'repositories/task_repository.dart';
 import 'router.dart';
 import 'states/board_cubit.dart';
 import 'states/task_list_cubit.dart';
 import 'theme.dart';
 
+/// API 基地址：`--dart-define=QTCLOUD_EXECUTE_API=<url>`（生产在部署时注入）；
+/// 缺省回退到本地开发地址。为空兜底也回退到本地开发地址。
+const String _apiBaseUrl = String.fromEnvironment('QTCLOUD_EXECUTE_API');
+
+/// 构建服务端 API 仓储（运行期默认数据源）。
+Future<TaskRepository> loadApiRepository() async =>
+    ApiTaskRepository(
+      baseUrl: _apiBaseUrl.isEmpty ? 'http://127.0.0.1:8080' : _apiBaseUrl,
+    );
+
 void main() {
   usePathUrlStrategy();
   runApp(const QuantTideExecuteStudioApp());
 }
 
-/// 应用根：注入仓储（种子/本地文件），MultiBlocProvider 提供 Cubit。
+/// 应用根：注入仓储（服务端 API），MultiBlocProvider 提供 Cubit。
 ///
-/// 仓储异步加载（asset/文件 IO）——加载完成前显示 loading，失败显示错误；
+/// 仓储异步加载（API 请求）——加载完成前显示 loading，失败显示错误；
 /// 测试通过 [loadRepository] 注入内存仓储（不碰文件/网络）。
 class QuantTideExecuteStudioApp extends StatefulWidget {
   const QuantTideExecuteStudioApp({super.key, this.loadRepository});
 
-  /// 仓储加载器，默认从种子 asset 构建；测试可注入替换
+  /// 仓储加载器，默认从服务端 API 构建；测试可注入替换
   final Future<TaskRepository> Function()? loadRepository;
 
   @override
@@ -44,7 +53,7 @@ class _QuantTideExecuteStudioAppState extends State<QuantTideExecuteStudioApp> {
   Future<void> _load() async {
     try {
       final TaskRepository repository =
-          await (widget.loadRepository ?? loadSeedRepository)();
+          await (widget.loadRepository ?? loadApiRepository)();
       if (!mounted) return;
       setState(() => _repository = repository);
     } catch (e) {

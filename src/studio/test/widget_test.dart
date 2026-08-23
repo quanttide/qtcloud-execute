@@ -11,7 +11,7 @@ import 'package:qtcloud_execute_studio/widgets/task_detail_dialog.dart';
 
 /// 从种子文件同步读取构建内存仓储（注入给应用，避免真实 asset 通道竞态）
 Future<TaskRepository> loadSeedRepositoryFromFile() async {
-  final String raw = File('assets/data/seed_tasks.json').readAsStringSync();
+  final String raw = File('test/fixtures/seed_tasks.json').readAsStringSync();
   return InMemoryTaskRepository.fromJson(jsonDecode(raw) as Map<String, dynamic>);
 }
 

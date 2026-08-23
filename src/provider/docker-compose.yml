@@ -1,6 +1,7 @@
 # 本地开发环境：一键构建并启动 provider
 # 用法：docker compose up -d --build   （停止：docker compose down）
-# 数据：默认本地文件存储，挂载 ./data 目录（仓库内已有 data/tasks.json）；
+# 数据：默认本地文件存储，挂载 ./data 目录（本地联调所需的 data/tasks.json 需自备，
+#       种子已不在仓库内置——canonical 种子在 data/profile/data/tasks.json，部署后上传 OSS）；
 #       生产环境运行时切换 OSS store（QTCLOUD_EXECUTE_STORE=oss），见 manifests/terraform/fc.tf
 # 覆盖：QTCLOUD_EXECUTE_STORE=oss 并注入 ALIYUN_OSS_* / ALIYUN_ACCESS_KEY_ID/SECRET 即可联调云端数据源
 services:

@@ -16,7 +16,9 @@ jobs:
           flutter-version: '3.44.8'
 
       - run: cd src/studio && flutter pub get
-      - run: cd src/studio && flutter build web --dart-define=APP_VERSION=${GITHUB_REF_NAME#studio/}
+      # QTCLOUD_EXECUTE_API：provider API 基地址（FC HTTP 触发器 URL），
+      # 在仓库 Actions → Variables 配置（如 https://<fc-trigger>.fc.aliyuncs.com）
+      - run: cd src/studio && flutter build web --dart-define=APP_VERSION=${GITHUB_REF_NAME#studio/} --dart-define=QTCLOUD_EXECUTE_API=${{ vars.QTCLOUD_EXECUTE_API }}
 
       - uses: manyuanrong/setup-ossutil@v3.0
         with:
@@ -27,10 +29,6 @@ jobs:
       # 长缓存：Flutter 产物文件名含内容哈希，可放心 max-age=31536000
       - name: Upload to OSS
         run: ossutil cp src/studio/build/web/ oss://qtcloud-execute-studio/ -r -f --meta=Cache-Control:public,max-age=31536000
-
-      # seed 数据（assets/data/）无内容哈希：长缓存会导致页面数据更新不生效，改用短缓存
-      - name: Upload seed data with short cache
-        run: ossutil cp src/studio/build/web/assets/assets/data/ oss://qtcloud-execute-studio/assets/assets/data/ -r -f --meta=Cache-Control:public,max-age=60
 
       - name: Refresh CDN
         run: |

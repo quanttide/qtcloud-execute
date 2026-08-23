@@ -9,7 +9,7 @@ import 'package:qtcloud_execute_studio/states/board_cubit.dart';
 
 /// 读取种子文件（测试 cwd 为 src/studio）
 Map<String, dynamic> readSeedJson() =>
-    jsonDecode(File('assets/data/seed_tasks.json').readAsStringSync())
+    jsonDecode(File('test/fixtures/seed_tasks.json').readAsStringSync())
         as Map<String, dynamic>;
 
 void main() {

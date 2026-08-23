@@ -17,7 +17,7 @@ class TaskListState {
 /// 清单层 Cubit：加载清单（动态）与切换当前清单。
 ///
 /// 构造注入 [TaskRepository]——测试注入 [InMemoryTaskRepository]，
-/// 运行时可注入 [LocalFileTaskRepository] 或其他实现，不在此 new 仓储。
+/// 运行时可注入 [ApiTaskRepository] 或其他实现，不在此 new 仓储。
 class TaskListCubit extends Cubit<TaskListState> {
   TaskListCubit(this._repository) : super(const TaskListState());
 

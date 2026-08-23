@@ -9,7 +9,7 @@ import (
 	"github.com/quanttide/qtcloud-execute-provider/internal/store"
 )
 
-// seedData 对齐 seed_tasks.json 结构的最小样例
+// seedData 对齐 tasks.json 结构的最小样例
 const seedData = `{
   "lists": [
     {
