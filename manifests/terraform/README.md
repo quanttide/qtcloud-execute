@@ -10,7 +10,7 @@
 ## 二、provider（FC 3.0 容器，任务 API）
 
 - **FC 函数** `qtcloud-execute-prod`：custom-container，承载 `src/provider`（任务清单 API）
-- **数据 OSS 桶** `qtcloud-execute-data`（私有）：provider 运行时读写 `data/tasks.json`
+- **数据 OSS 桶** `qtcloud-execute-provider`（私有）：provider 运行时读写 `data/tasks.json`
   （`QTCLOUD_EXECUTE_STORE=oss`；见 `fc.tf` 的 `environment_variables`）
 - **HTTP 触发器**：`https://<fc-fn>.<region>.fcapp.run`（直连入口，后续可上系统级 API 网关）
 

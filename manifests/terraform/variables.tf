@@ -45,7 +45,7 @@ variable "image" {
 variable "oss_data_bucket" {
   description = "provider 运行时任务数据 OSS 桶（QTCLOUD_EXECUTE_STORE=oss 时读写 data/tasks.json）"
   type        = string
-  default     = "qtcloud-execute-data"
+  default     = "qtcloud-execute-provider"
 }
 
 variable "oss_endpoint" {
