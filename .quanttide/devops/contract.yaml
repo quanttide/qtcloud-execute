@@ -7,3 +7,8 @@ scopes:
     dir: src/provider
     language: go
     build_tool: go
+  cli:
+    dir: src/cli
+    language: rust
+    build_tool: cargo
+    ci_workflow: release-cli

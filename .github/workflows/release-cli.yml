@@ -1,0 +1,51 @@
+# 发布 CLI：推送 tag（cli/*，如 cli/v0.1.0）时，
+# 构建 `src/cli` 的 release 二进制并挂到 GitHub Release（由 qtcloud-devops release 创建或此处兜底创建）。
+#
+# 说明：CLI 为纯 Rust 二进制（服务于云端 provider），不发布到 crates.io/PyPI；
+# 产物直接作为 GitHub Release 资产，供下载/部署。
+
+name: release-cli
+
+on:
+  push:
+    tags:
+      - 'cli/*'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: src/cli
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          target: x86_64-unknown-linux-gnu
+
+      # 构建 + 测试（测试当前无用例，但可捕获编译错误）
+      - name: Test
+        run: cargo test --release --target x86_64-unknown-linux-gnu
+
+      - name: Build binary
+        run: cargo build --release --target x86_64-unknown-linux-gnu
+
+      # 挂到 GitHub Release：qtcloud-devops release 通常已创建；若因时序未创建则兜底创建
+      - name: Attach to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BIN="${GITHUB_WORKSPACE}/src/cli/target/x86_64-unknown-linux-gnu/release/qtcloud-execute"
+          echo "uploading: ${BIN}"
+          gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1 || \
+            gh release create "${GITHUB_REF_NAME}" --title "${GITHUB_REF_NAME}" --generate-notes
+          gh release upload "${GITHUB_REF_NAME}" "${BIN}" --clobber || \
+            { echo "::error::gh release upload 失败（需 Release 已存在且具备写权限）"; exit 1; }
