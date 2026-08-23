@@ -5,11 +5,12 @@ use std::time::{SystemTime, UNIX_EPOCH};
 /// 量潮执行云 CLI —— 云端任务 API 的辅助入口（主要供 AI 使用）
 ///
 /// 纯服务端客户端：只对接已部署 provider 的 HTTP 接口，不读写本地文件。
-/// 数据源地址：`--server <BASE_URL>` 或环境变量 `QTCLOUD_EXECUTE_SERVER`（二选一，必填）。
+/// API 基地址：`--server <BASE_URL>` > 环境变量 `QTCLOUD_EXECUTE_API_BASE_URL` > 默认系统级网关
+/// `https://api.quanttide.com/qtcloud-execute`（与 studio/delib 约定一致）。
 #[derive(Parser)]
 #[command(name = "qtcloud-execute", version, about = "量潮执行云 CLI：云端任务管理（AI 辅助入口）")]
 struct Cli {
-    /// 服务端 base URL（如 https://qtcloudute-prod-xxx.cn-hangzhou.fcapp.run）；未设时读环境变量 QTCLOUD_EXECUTE_SERVER
+    /// API 基地址覆盖（默认 https://api.quanttide.com/qtcloud-execute；未设时读环境变量 QTCLOUD_EXECUTE_API_BASE_URL）
     #[arg(long, global = true)]
     server: Option<String>,
     /// 以 JSON 输出（AI 友好，直接透传服务端响应）
@@ -111,16 +112,19 @@ fn exit_err(e: &str) -> ! {
     std::process::exit(1);
 }
 
-/// 解析服务端地址：--server 参数 > 环境变量 QTCLOUD_EXECUTE_SERVER > 报错
+/// 生产 API 基地址（系统级 API 网关，与 studio/delib 约定一致）；`QTCLOUD_EXECUTE_API_BASE_URL` 可覆盖，`--server` 优先。
+const DEFAULT_API_BASE: &str = "https://api.quanttide.com/qtcloud-execute";
+
+/// 解析 API 基地址：--server 参数 > 环境变量 QTCLOUD_EXECUTE_API_BASE_URL > 默认网关
 fn resolve_base(cli_server: &Option<String>) -> String {
     if let Some(s) = cli_server {
         if !s.trim().is_empty() {
             return s.trim_end_matches('/').to_string();
         }
     }
-    match std::env::var("QTCLOUD_EXECUTE_SERVER") {
+    match std::env::var("QTCLOUD_EXECUTE_API_BASE_URL") {
         Ok(s) if !s.trim().is_empty() => s.trim_end_matches('/').to_string(),
-        _ => exit_err("未指定服务端地址：用 --server <BASE_URL> 或环境变量 QTCLOUD_EXECUTE_SERVER"),
+        _ => DEFAULT_API_BASE.to_string(),
     }
 }
 

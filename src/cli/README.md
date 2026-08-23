@@ -6,16 +6,18 @@
 
 ## 服务端地址
 
-两种方式，二选一（必填）：
+默认指向 **系统级 API 网关** `https://api.quanttide.com/qtcloud-execute`（与 studio/delib 约定一致）。可覆盖：
 
 ```bash
-# 显式指定
-qtcloud-execute --server https://qtcloudute-prod-XXX.cn-hangzhou.fcapp.run lists
-
-# 或环境变量（一次性配置，后续命令可省）
-export QTCLOUD_EXECUTE_SERVER=https://qtcloudute-prod-XXX.cn-hangzhou.fcapp.run
+# 环境变量（推荐，一次配置）
+export QTCLOUD_EXECUTE_API_BASE_URL=https://api.quanttide.com/qtcloud-execute
 qtcloud-execute lists
+
+# 或每次显式指定 --server（优先级最高）
+qtcloud-execute --server https://api.quanttide.com/qtcloud-execute lists
 ```
+
+优先级：`--server` > `QTCLOUD_EXECUTE_API_BASE_URL` > 默认网关。
 
 ## 子命令
 
