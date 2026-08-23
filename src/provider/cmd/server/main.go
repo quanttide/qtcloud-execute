@@ -55,24 +55,7 @@ func main() {
 		addr = ":8080"
 	}
 	log.Printf("qtcloud-execute provider listening on %s", addr)
-	if err := http.ListenAndServe(addr, withCORS(mux)); err != nil {
+	if err := http.ListenAndServe(addr, mux); err != nil {
 		log.Fatal(err)
 	}
-}
-
-// withCORS 为 API 加跨域头：studio Web 前端在浏览器中跨源调用 FC API 所必需。
-//
-// 业务 API 为无凭证的公开读（任务清单仅含产品/技术事实），故允许任意源；
-// 若后续改为鉴权，再把 Origin/Headers 收敛到白名单。
-func withCORS(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
 }
