@@ -30,7 +30,7 @@
 ```
 Task（任务）              —— 一个事项，最小单元
   ├── title（标题——一句话概括）
-  ├── content（内容/描述）
+  ├── description（描述——展开细节）
   ├── status（待办/进行中/blocked/完成）
   └── priority（优先级，AI 建议 + 人确认）
 
