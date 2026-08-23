@@ -1,0 +1,19 @@
+# 本地开发环境：一键构建并启动 provider
+# 用法：docker compose up -d --build   （停止：docker compose down）
+# 数据：默认本地文件存储，挂载 ./data 目录（仓库内已有 data/tasks.json）；
+#       生产环境运行时切换 OSS store（QTCLOUD_EXECUTE_STORE=oss），见 manifests/terraform/fc.tf
+# 覆盖：QTCLOUD_EXECUTE_STORE=oss 并注入 ALIYUN_OSS_* / ALIYUN_ACCESS_KEY_ID/SECRET 即可联调云端数据源
+services:
+  provider:
+    build: .
+    image: qtcloud-execute-provider:local
+    container_name: qtcloud-execute-provider
+    ports:
+      - "8080:8080"
+    environment:
+      QTCLOUD_EXECUTE_STORE: local
+      QTCLOUD_EXECUTE_DATA: /data/tasks.json
+      QTCLOUD_EXECUTE_ADDR: ":8080"
+    volumes:
+      - ./data:/data
+    restart: unless-stopped

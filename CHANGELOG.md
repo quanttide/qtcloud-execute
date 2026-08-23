@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.0-alpha.1] - 2026-08-23
+
+- provider：新增 `src/provider/Dockerfile`（多阶段静态构建 + alpine 运行）+ `docker-compose.yml`（本地一键起，挂载 `data/tasks.json`）
+- provider：IaC 追加 FC 3.0 部署（`manifests/terraform/fc.tf`）——runtime `custom-container` 容器 + 运行时 OSS 数据桶 `qtcloud-execute-data`；`main.tf` 切换到 OSS 远程 state（`quanttide-terraform-state`）
+- provider：新增 `.github/workflows/deploy-provider.yml`（`provider/*` tag → 构建镜像推 ACR → Terraform apply 到 FC）；`.quanttide/devops/contract.yaml` 增加 `provider` scope
+- 验证：`terraform validate` 通过、`docker build` + 容器运行 `health`/`/api/lists`/404 均正常
+
 ## [0.1.0-beta.2] - 2026-08-23
 
 - studio：真看板（方案 A）重构——一次一个清单（项目隔离单元），左侧清单导航栏 + 状态列泳道看板
