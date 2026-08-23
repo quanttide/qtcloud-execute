@@ -11,4 +11,5 @@ scopes:
     dir: src/cli
     language: rust
     build_tool: cargo
+    registry: crates
     ci_workflow: release-cli

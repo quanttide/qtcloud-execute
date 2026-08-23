@@ -1,7 +1,14 @@
 [package]
 name = "qtcloud-execute-cli"
-version = "0.1.0"
+version = "0.1.0-alpha.1"
 edition = "2024"
+description = "量潮执行云 CLI——云端任务管理（纯服务端客户端，供 AI/脚本调用）"
+authors = ["QuantTide <opensource@quanttide.com>"]
+license = "Apache-2.0"
+repository = "https://github.com/quanttide/qtcloud-execute"
+readme = "README.md"
+keywords = ["qtcloud", "quanttide", "task", "cli"]
+categories = ["command-line-utilities"]
 
 [[bin]]
 name = "qtcloud-execute"

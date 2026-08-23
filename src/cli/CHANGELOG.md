@@ -8,3 +8,4 @@
 - cli：新增 `--json` 输出（直接透传服务端响应），供 AI/脚本解析
 - cli：API 基地址统一为 `QTCLOUD_EXECUTE_API_BASE_URL`，默认系统级网关 `https://api.quanttide.com/qtcloud-execute`（对齐 studio/delib 规范）
 - ci(cli)：新增 `release-cli` 工作流（`cli/*` tag → cargo build → 挂载二进制到 GitHub Release），并登记 `cli` scope
+- ci(cli)：`release-cli` 增加 crates.io 发布（`cargo publish`，需 secret `CRATES_API_TOKEN`）；Cargo 元数据补齐（description/license/repository），版本对齐 `0.1.0-alpha.1`

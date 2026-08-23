@@ -49,3 +49,18 @@ jobs:
             gh release create "${GITHUB_REF_NAME}" --title "${GITHUB_REF_NAME}" --generate-notes
           gh release upload "${GITHUB_REF_NAME}" "${BIN}" --clobber || \
             { echo "::error::gh release upload 失败（需 Release 已存在且具备写权限）"; exit 1; }
+
+  # 发布到 crates.io（对齐 qtcloud-devops）：需要 repo/org secret CRATES_API_TOKEN
+  publish-crate:
+    needs: build-and-release
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/cli
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+      - name: Publish to crates.io
+        run: cargo publish --allow-dirty --token ${{ secrets.CRATES_API_TOKEN }}
