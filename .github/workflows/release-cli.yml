@@ -60,12 +60,17 @@ jobs:
         with:
           target: ${{ matrix.target }}
       - name: build binary
-        run: cargo build --release --target ${{ matrix.target }}
+        run: |
+          cargo build --release --target ${{ matrix.target }}
+          # 资产名带 cli（对齐 crate qtcloud-execute-cli，避免与其他组件产物冲突）；
+          # gh release upload 不支持重命名，故复制为带 scope+target 后缀的唯一文件名
+          cp "target/${{ matrix.target }}/release/qtcloud-execute${{ matrix.ext }}" \
+             "qtcloud-execute-cli-${{ matrix.target }}${{ matrix.ext }}"
       - name: upload binary
         uses: actions/upload-artifact@v5
         with:
-          name: qtcloud-execute-${{ matrix.target }}
-          path: ${{ github.workspace }}/src/cli/target/${{ matrix.target }}/release/qtcloud-execute${{ matrix.ext }}
+          name: qtcloud-execute-cli-${{ matrix.target }}
+          path: qtcloud-execute-cli-${{ matrix.target }}${{ matrix.ext }}
 
   publish-crate:
     needs: build-binaries
@@ -91,7 +96,7 @@ jobs:
       - name: download binaries
         uses: actions/download-artifact@v5
         with:
-          pattern: qtcloud-execute-*
+          pattern: qtcloud-execute-cli-*
           path: dist
       - name: attach to GitHub Release
         env:
@@ -99,14 +104,12 @@ jobs:
         run: |
           gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1 || \
             gh release create "${GITHUB_REF_NAME}" --title "${GITHUB_REF_NAME}" --generate-notes
-          for dir in dist/qtcloud-execute-*; do
+          # 文件已带 qtcloud-execute-cli-<target> 唯一名，直接上传（clobber 幂等）
+          for dir in dist/qtcloud-execute-cli-*; do
             [ -d "$dir" ] || continue
-            target="${dir#dist/qtcloud-execute-}"
             for bin in "$dir"/*; do
               [ -f "$bin" ] || continue
-              name="qtcloud-execute-${target}"
-              [[ "$bin" == *.exe ]] && name="${name}.exe"
-              echo "attach: ${bin} -> ${name}"
-              gh release upload "${GITHUB_REF_NAME}" "${bin}#${name}" --clobber
+              echo "attach: ${bin}"
+              gh release upload "${GITHUB_REF_NAME}" "$bin" --clobber
             done
           done
