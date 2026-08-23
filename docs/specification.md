@@ -29,9 +29,10 @@
 
 ```
 Task（任务）              —— 一个事项，最小单元
-  ├── content / status（待办/进行中/完成）
+  ├── title（标题——一句话概括）
+  ├── content（内容/描述）
+  ├── status（待办/进行中/blocked/完成）
   ├── priority（优先级，AI 建议 + 人确认）
-  ├── blockReason（阻塞标记，可空）
   └── source（来源：日志提炼/手动）
 
 TaskList（任务清单）       —— 一组任务的容器
