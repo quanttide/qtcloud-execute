@@ -16,10 +16,19 @@ variable "cdn_domain" {
   default     = "studio.execute.cloud.quanttide.com"
 }
 
-variable "cdn_scope" {
-  description = "CDN 加速区域：domestic / overseas / global"
+# ============================================================
+# site（React+Vite 介绍页，.github/workflows/deploy-site.yml）相关变量
+# ============================================================
+variable "site_bucket_name" {
+  description = "site 部署的 OSS 桶名（与 deploy-site.yml 保持一致）"
   type        = string
-  default     = "global"
+  default     = "qtcloud-execute-site"
+}
+
+variable "site_cdn_domain" {
+  description = "site CDN 加速域名（原 studio 域，按惯例移交 site 承载）"
+  type        = string
+  default     = "execute.cloud.quanttide.com"
 }
 
 # ============================================================

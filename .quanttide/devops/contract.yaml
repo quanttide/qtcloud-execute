@@ -3,6 +3,10 @@ scopes:
     dir: src/studio
     language: dart
     build_tool: flutter
+  site:
+    dir: src/site
+    language: typescript
+    build_tool: npm
   provider:
     dir: src/provider
     language: go

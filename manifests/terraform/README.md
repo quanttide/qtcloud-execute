@@ -2,10 +2,12 @@
 
 管理「量潮执行云」的云上基础设施，含两部分：
 
-## 一、studio 静态站（已有）
+## 一、静态站（studio + site）
 
-- **OSS 桶** `qtcloud-execute-studio`：studio Web 构建产物部署目标（`deploy-studio.yml` 上传路径）
-- **CDN 域名** `execute.cloud.quanttide.com`：web 加速，回源到上述 OSS 桶
+- **studio OSS 桶** `qtcloud-execute-studio`：studio Web 构建产物部署目标（`deploy-studio.yml` 上传路径）
+- **studio CDN 域名** `studio.execute.cloud.quanttide.com`：web 加速，回源到上述 OSS 桶
+- **site OSS 桶** `qtcloud-execute-site`：site（React+Vite 介绍页）构建产物部署目标（`deploy-site.yml` 上传路径）
+- **site CDN 域名** `execute.cloud.quanttide.com`：web 加速，回源到上述 OSS 桶（原 studio 域，按惯例移交 site 承载）
 
 ## 二、provider（FC 3.0 容器，任务 API）
 

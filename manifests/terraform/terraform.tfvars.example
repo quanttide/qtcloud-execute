@@ -1,8 +1,13 @@
 # 复制为 terraform.tfvars 并按需修改
 region           = "cn-hangzhou"
+
+# studio（Flutter Web）桶与 CDN
 bucket_name      = "qtcloud-execute-studio"
-cdn_domain       = "execute.cloud.quanttide.com"
-cdn_scope        = "global"
+cdn_domain       = "studio.execute.cloud.quanttide.com"
+
+# site（React+Vite 介绍页）桶与 CDN（原 studio 域，按惯例移交 site 承载）
+site_bucket_name = "qtcloud-execute-site"
+site_cdn_domain  = "execute.cloud.quanttide.com"
 
 # provider（FC）
 environment       = "prod"

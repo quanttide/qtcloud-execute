@@ -18,6 +18,26 @@ output "cdn_cname" {
   value       = alicloud_cdn_domain_new.studio.cname
 }
 
+output "site_bucket_name" {
+  description = "site OSS 桶名"
+  value       = alicloud_oss_bucket.site.bucket
+}
+
+output "site_bucket_domain" {
+  description = "site OSS 桶访问域名（CDN 回源地址）"
+  value       = format("%s.%s", alicloud_oss_bucket.site.bucket, alicloud_oss_bucket.site.extranet_endpoint)
+}
+
+output "site_cdn_domain" {
+  description = "site CDN 加速域名（原 studio 域，现承载 site）"
+  value       = alicloud_cdn_domain_new.site.domain_name
+}
+
+output "site_cdn_cname" {
+  description = "site CDN CNAME"
+  value       = alicloud_cdn_domain_new.site.cname
+}
+
 # ============================================================
 # provider（FC）输出
 # ============================================================

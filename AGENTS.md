@@ -5,9 +5,10 @@
 ## 项目结构
 
 - `src/studio/` — qtcloud_execute_studio（Flutter 应用，studio 看板）
+- `src/site/` — qtcloud-execute site（React+Vite 介绍页）
 - `src/provider/` — qtcloud-execute provider（Go 服务端，FC 3.0 部署）
 - `src/cli/` — qtcloud-execute CLI（Rust，纯服务端客户端，AI 辅助入口）
-- `.github/workflows/` — CI（`test-studio.yml`、`deploy-studio.yml`、`deploy-provider.yml`、`release-cli.yml`）
+- `.github/workflows/` — CI（`test-studio.yml`、`deploy-studio.yml`、`deploy-site.yml`、`deploy-provider.yml`、`release-cli.yml`）
 
 ## 分 scope 的 CHANGELOG
 
