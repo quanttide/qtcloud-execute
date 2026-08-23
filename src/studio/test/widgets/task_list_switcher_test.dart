@@ -6,9 +6,9 @@ import 'package:qtcloud_execute_studio/widgets/task_list_switcher.dart';
 
 void main() {
   const List<TaskList> lists = [
-    TaskList(id: 'qtdata', name: '量潮数据', groups: [Group.business, Group.product]),
-    TaskList(id: 'qtclass', name: '量潮课堂', groups: [Group.operation, Group.product]),
-    TaskList(id: 'qtcloud', name: '量潮云', groups: [Group.product]),
+    TaskList(id: 'qtdata', name: '量潮数据', tasks: []),
+    TaskList(id: 'qtclass', name: '量潮课堂', tasks: []),
+    TaskList(id: 'qtcloud', name: '量潮云', tasks: []),
   ];
 
   Future<void> pumpSwitcher(
@@ -44,15 +44,15 @@ void main() {
 
     testWidgets('新增清单自动出现（数据驱动）', (tester) async {
       await pumpSwitcher(tester, items: const [
-        TaskList(id: 'qtdata', name: '量潮数据', groups: [Group.product]),
+        TaskList(id: 'qtdata', name: '量潮数据', tasks: []),
       ]);
       expect(find.text('量潮数据'), findsOneWidget);
       expect(find.text('量潮课堂'), findsNothing);
 
       // 新清单加入后自动出现
       await pumpSwitcher(tester, items: const [
-        TaskList(id: 'qtdata', name: '量潮数据', groups: [Group.product]),
-        TaskList(id: 'newbiz', name: '新业务', groups: [Group.operation]),
+        TaskList(id: 'qtdata', name: '量潮数据', tasks: []),
+        TaskList(id: 'newbiz', name: '新业务', tasks: []),
       ]);
       expect(find.text('新业务'), findsOneWidget);
     });

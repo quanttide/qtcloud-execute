@@ -43,17 +43,22 @@ class _TaskDetailDialogState extends State<TaskDetailDialog> {
   late Task _draft;
 
   late final TextEditingController _descriptionController;
+  late final TextEditingController _categoryController;
 
   @override
   void initState() {
     super.initState();
     _draft = widget.task;
-    _descriptionController = TextEditingController(text: widget.task.description);
+    _descriptionController = TextEditingController(
+      text: widget.task.description,
+    );
+    _categoryController = TextEditingController(text: widget.task.category);
   }
 
   @override
   void dispose() {
     _descriptionController.dispose();
+    _categoryController.dispose();
     super.dispose();
   }
 
@@ -77,8 +82,16 @@ class _TaskDetailDialogState extends State<TaskDetailDialog> {
     _apply(_draft.copyWith(priority: priority));
   }
 
-  void _saveDescription() {
-    _apply(_draft.copyWith(description: _descriptionController.text));
+  /// 保存描述 + 分类：trim 后提交（分类为空置 null——业务自定义，可选）。
+  void _save() {
+    _apply(
+      _draft.copyWith(
+        description: _descriptionController.text,
+        category: _categoryController.text.trim().isEmpty
+            ? null
+            : _categoryController.text.trim(),
+      ),
+    );
     Navigator.of(context).pop();
   }
 
@@ -139,6 +152,19 @@ class _TaskDetailDialogState extends State<TaskDetailDialog> {
               const SizedBox(height: 12),
               _buildSection(
                 context,
+                title: '分类',
+                child: TextField(
+                  key: const ValueKey('category-field'),
+                  controller: _categoryController,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: '业务自定义分类（可选，如 business / product / operation）…',
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _buildSection(
+                context,
                 title: '描述',
                 child: TextField(
                   key: const ValueKey('description-field'),
@@ -155,7 +181,7 @@ class _TaskDetailDialogState extends State<TaskDetailDialog> {
                 alignment: Alignment.centerRight,
                 child: FilledButton(
                   key: const ValueKey('save-description'),
-                  onPressed: _saveDescription,
+                  onPressed: _save,
                   child: const Text('保存'),
                 ),
               ),

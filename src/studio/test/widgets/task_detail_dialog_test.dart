@@ -40,7 +40,7 @@ void main() {
   }
 
   group('TaskDetailDialog 渲染', () {
-    testWidgets('弹窗渲染四字段（title/状态/优先级/描述）', (tester) async {
+    testWidgets('弹窗渲染五字段（title/状态/优先级/分类/描述）', (tester) async {
       await pumpDialog(tester);
 
       expect(find.byType(TaskDetailDialog), findsOneWidget);
@@ -55,12 +55,35 @@ void main() {
       for (final priority in TaskPriority.values) {
         expect(find.text(priority.label), findsOneWidget);
       }
+      // 分类（可编辑输入框，初始值为 task.category）
+      expect(find.text('分类'), findsOneWidget);
+      final categoryField = tester.widget<TextField>(
+        find.byKey(const ValueKey('category-field')),
+      );
+      expect(categoryField.controller!.text, isEmpty); // baseTask 无 category
       // 描述（可编辑输入框携带初始值）
       expect(find.text('描述'), findsOneWidget);
       final field = tester.widget<TextField>(
         find.byKey(const ValueKey('description-field')),
       );
       expect(field.controller!.text, 'ACR 实例凭证待确认，已发 issue');
+    });
+
+    testWidgets('category 初始值来自任务（带分类的任务）', (tester) async {
+      const withCategory = Task(
+        id: 't2',
+        title: '带分类任务',
+        description: '',
+        status: TaskStatus.notStarted,
+        priority: TaskPriority.low,
+        category: 'product',
+      );
+      await pumpDialog(tester, task: withCategory);
+
+      final field = tester.widget<TextField>(
+        find.byKey(const ValueKey('category-field')),
+      );
+      expect(field.controller!.text, 'product');
     });
   });
 
@@ -146,6 +169,47 @@ void main() {
     });
   });
 
+  group('TaskDetailDialog 分类编辑', () {
+    testWidgets('编辑分类 + 保存触发 onUpdated（trim 后提交）', (tester) async {
+      final updated = await pumpDialog(tester); // baseTask 无 category
+
+      await tester.enterText(
+        find.byKey(const ValueKey('category-field')),
+        '  product  ',
+      );
+      await tester.tap(find.byKey(const ValueKey('save-description')));
+      await tester.pumpAndSettle();
+
+      expect(updated, hasLength(1));
+      expect(updated.last.category, 'product');
+      expect(updated.last.status, TaskStatus.inProgress);
+      expect(updated.last.priority, TaskPriority.medium);
+      // 保存后弹窗关闭
+      expect(find.byType(TaskDetailDialog), findsNothing);
+    });
+
+    testWidgets('分类清空后保存：置 null（业务自定义可选）', (tester) async {
+      const withCategory = Task(
+        id: 't2',
+        title: '带分类任务',
+        description: '',
+        status: TaskStatus.notStarted,
+        priority: TaskPriority.low,
+        category: 'product',
+      );
+      final updated = await pumpDialog(tester, task: withCategory);
+
+      await tester.enterText(
+        find.byKey(const ValueKey('category-field')),
+        '',
+      );
+      await tester.tap(find.byKey(const ValueKey('save-description')));
+      await tester.pumpAndSettle();
+
+      expect(updated.last.category, isNull);
+    });
+  });
+
   group('TaskDetailDialog 描述编辑', () {
     testWidgets('编辑 + 保存触发 onUpdated 并关闭弹窗', (tester) async {
       final updated = await pumpDialog(tester);
@@ -161,6 +225,8 @@ void main() {
       expect(updated.last.description, '凭证已确认，等待客户回复');
       expect(updated.last.status, TaskStatus.inProgress);
       expect(updated.last.priority, TaskPriority.medium);
+      // 分类未编辑保持原值（baseTask 无分类 → null）
+      expect(updated.last.category, isNull);
       // 保存后弹窗关闭
       expect(find.byType(TaskDetailDialog), findsNothing);
     });

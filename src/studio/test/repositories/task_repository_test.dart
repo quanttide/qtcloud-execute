@@ -20,58 +20,62 @@ void main() {
       repository = InMemoryTaskRepository.fromJson(readSeedJson());
     });
 
-    test('loadLists 返回全部 3 个清单', () async {
+    test('loadLists 返回全部 3 个清单（含任务，直接归属）', () async {
       final List<TaskList> lists = await repository.loadLists();
       expect(lists.map((l) => l.id), ['qtdata', 'qtclass', 'qtcloud']);
       expect(lists.map((l) => l.name), ['量潮数据', '量潮课堂', '量潮云']);
-      // 全部清单的分组并集 = 三个职能（各清单分组不同）
-      final allGroups = lists.expand((l) => l.groups).toSet();
-      expect(allGroups, {
-        Group.business,
-        Group.product,
-        Group.operation,
-      });
+      // 任务平铺在清单下（无分组层级）
+      expect(lists.firstWhere((l) => l.id == 'qtdata').tasks, hasLength(4));
+      expect(lists.firstWhere((l) => l.id == 'qtclass').tasks, hasLength(3));
+      expect(lists.firstWhere((l) => l.id == 'qtcloud').tasks, hasLength(4));
     });
 
-    test('loadTasks 按职能分组返回任务', () async {
-      final Map<Group, List<Task>> grouped =
-          await repository.loadTasks('qtdata');
-      expect(grouped[Group.business], hasLength(2));
-      expect(grouped[Group.product], hasLength(2));
-      expect(grouped[Group.operation], isNull);
-      expect(grouped[Group.product]!.map((t) => t.id),
-          ['qtdata-reproduction', 'qtdata-product-research']);
+    test('loadTasks 返回清单任务平铺列表（含 category）', () async {
+      final List<Task> tasks = await repository.loadTasks('qtdata');
+      expect(tasks, hasLength(4));
+      expect(tasks.map((t) => t.id), [
+        'qtdata-project-closeout',
+        'qtdata-project-review',
+        'qtdata-reproduction',
+        'qtdata-product-research',
+      ]);
+      // category 用原分组名（business/product——业务自定义分类）
+      expect(tasks.map((t) => t.category).toSet(), {'business', 'product'});
     });
 
     test('updateTask 替换同 id 任务', () async {
-      const updated = Task(
+      final updated = Task(
         id: 'qtdata-reproduction',
         title: '客户项目复现（修订）',
         description: '数据清洗完成，进入交付。',
         status: TaskStatus.inProgress,
         priority: TaskPriority.high,
+        category: 'product',
       );
-      await repository.updateTask('qtdata', Group.product, updated);
+      await repository.updateTask('qtdata', updated);
 
-      final grouped = await repository.loadTasks('qtdata');
-      final tasks = grouped[Group.product]!;
-      expect(tasks, hasLength(2));
-      expect(tasks.firstWhere((t) => t.id == 'qtdata-reproduction').status,
-          TaskStatus.inProgress);
+      final tasks = await repository.loadTasks('qtdata');
+      expect(tasks, hasLength(4)); // 同 id 替换，数量不变
+      expect(
+        tasks.firstWhere((t) => t.id == 'qtdata-reproduction').title,
+        '客户项目复现（修订）',
+      );
     });
 
     test('updateTask 不存在则新增', () async {
-      const created = Task(
+      final created = Task(
         id: 'qtclass-new',
         title: '新任务',
         description: '新增描述',
         status: TaskStatus.notStarted,
         priority: TaskPriority.low,
+        category: 'operation',
       );
-      await repository.updateTask('qtclass', Group.operation, created);
+      await repository.updateTask('qtclass', created);
 
-      final grouped = await repository.loadTasks('qtclass');
-      expect(grouped[Group.operation], hasLength(3)); // 2 已有 + 1 新增
+      final tasks = await repository.loadTasks('qtclass');
+      expect(tasks, hasLength(4)); // 3 已有 + 1 新增
+      expect(tasks.last.id, 'qtclass-new');
     });
 
     test('未知清单抛 StateError；已知清单合法', () async {
@@ -82,7 +86,6 @@ void main() {
       await expectLater(
         repository.updateTask(
           'qtdata',
-          Group.business,
           const Task(
             id: 'x',
             title: 'x',
@@ -113,7 +116,7 @@ void main() {
       }
     });
 
-    test('从种子文件加载：清单与分组任务一致', () async {
+    test('从种子文件加载：清单与平铺任务一致', () async {
       final File file = File('${tempDir.path}/seed.json')
         ..writeAsStringSync(jsonEncode(readSeedJson()));
 
@@ -121,13 +124,14 @@ void main() {
       final List<TaskList> lists = await repository.loadLists();
       expect(lists, hasLength(3));
 
-      final grouped = await repository.loadTasks('qtcloud');
-      expect(grouped[Group.product]!.map((t) => t.id), [
+      final List<Task> tasks = await repository.loadTasks('qtcloud');
+      expect(tasks.map((t) => t.id), [
         'qtcloud-finance-deploy',
         'qtcloud-agenda-iteration',
         'qtcloud-toolkit-refactor',
         'qtcloud-doc-center',
       ]);
+      expect(tasks.every((t) => t.category == 'product'), isTrue);
     });
 
     test('updateTask + save 原子写回，重读可见', () async {
@@ -137,26 +141,25 @@ void main() {
       final repository = LocalFileTaskRepository(file);
       await repository.updateTask(
         'qtcloud',
-        Group.product,
-        const Task(
+        Task(
           id: 'qtcloud-finance-deploy',
           title: '财务平台部署（已上线）',
           description: '部署完成并通过验收。',
           status: TaskStatus.done,
           priority: TaskPriority.urgent,
+          category: 'product',
         ),
       );
       await repository.save();
 
       // 重读文件：更新已持久化
       final reopened = LocalFileTaskRepository(file);
-      final grouped = await reopened.loadTasks('qtcloud');
-      final task = grouped[Group.product]!
-          .firstWhere((t) => t.id == 'qtcloud-finance-deploy');
+      final List<Task> tasks = await reopened.loadTasks('qtcloud');
+      final task = tasks.firstWhere((t) => t.id == 'qtcloud-finance-deploy');
       expect(task.title, '财务平台部署（已上线）');
       expect(task.status, TaskStatus.done);
-      // 未修改的分组不受影响
-      expect(grouped[Group.product]!.map((t) => t.id), [
+      // 未修改的任务不受影响
+      expect(tasks.map((t) => t.id), [
         'qtcloud-finance-deploy',
         'qtcloud-agenda-iteration',
         'qtcloud-toolkit-refactor',
@@ -170,7 +173,7 @@ void main() {
       expect(parsed, hasLength(3));
       final deployTask = parsed
           .firstWhere((l) => l.id == 'qtcloud')
-          .groupTasks[Group.product]!
+          .tasks
           .firstWhere((t) => t.id == 'qtcloud-finance-deploy');
       expect(deployTask.toJson()['status'], 'done');
     });

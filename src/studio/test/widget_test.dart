@@ -21,15 +21,14 @@ Future<void> pumpApp(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
-/// 看板单元格内的任务卡片（按 分组×状态 交叉定位）
-Finder cellCard(String groupWire, String statusWire, String taskId) =>
-    find.descendant(
-      of: find.byKey(ValueKey('drop-cell-$groupWire-$statusWire')),
-      matching: find.byKey(ValueKey('task-card-$taskId')),
-    );
+/// 状态列看板内定位任务卡片
+Finder columnCard(String statusWire, String taskId) => find.descendant(
+  of: find.byKey(ValueKey('drop-column-$statusWire')),
+  matching: find.byKey(ValueKey('task-card-$taskId')),
+);
 
 void main() {
-  testWidgets('首页渲染：清单切换器 + 二维看板（默认 qtdata）', (tester) async {
+  testWidgets('首页渲染：清单切换器 + 状态泳道看板（默认 qtdata）', (tester) async {
     await pumpApp(tester);
 
     // 清单切换器：数据驱动渲染三个清单，当前 qtdata 高亮
@@ -41,20 +40,18 @@ void main() {
     );
     expect(qtdata.selected, isTrue);
 
-    // 看板：列 = 分组（qtdata 实际存在 business/product），行 = 状态
-    expect(find.text('分组\\状态'), findsOneWidget);
-    expect(find.text('业务'), findsOneWidget);
-    expect(find.text('产品'), findsOneWidget);
-    expect(find.text('运营'), findsNothing); // qtdata 无运营分组
+    // 看板：四列 = 四状态（未开始/进行中/评审中/已完成）
     for (final label in ['未开始', '进行中', '评审中', '已完成']) {
       expect(find.text(label), findsOneWidget);
     }
 
-    // 任务卡片落在对应行列（business × inProgress）
+    // 任务卡片落在对应状态列（inProgress 列）
     expect(find.text('客户项目结项推进'), findsOneWidget);
-    expect(cellCard('business', 'inProgress', 'qtdata-project-closeout'),
-        findsOneWidget);
-    // 空单元格占位（不空白）
+    expect(
+      columnCard('inProgress', 'qtdata-project-closeout'),
+      findsOneWidget,
+    );
+    // 空列占位（不空白）
     expect(find.text('暂无任务'), findsWidgets);
   });
 
@@ -64,9 +61,7 @@ void main() {
     await tester.tap(find.text('量潮课堂'));
     await tester.pumpAndSettle();
 
-    // 看板跟随 qtclass：列切换为 运营/产品，任务换源
-    expect(find.text('运营'), findsOneWidget);
-    expect(find.text('业务'), findsNothing);
+    // 看板跟随 qtclass：任务换源，状态列仍固定四列
     expect(find.text('实训基地招聘运营'), findsOneWidget);
     expect(find.text('课堂创新原型'), findsOneWidget);
     expect(find.text('客户项目结项推进'), findsNothing); // qtdata 任务消失
@@ -89,7 +84,7 @@ void main() {
     await tester.tap(find.text('客户项目结项推进'));
     await tester.pumpAndSettle();
 
-    // 弹窗打开，四字段完整
+    // 弹窗打开，五字段完整
     expect(find.byType(TaskDetailDialog), findsOneWidget);
     expect(
       find.descendant(
@@ -100,9 +95,10 @@ void main() {
     );
     expect(find.text('状态'), findsOneWidget);
     expect(find.text('优先级'), findsOneWidget);
+    expect(find.text('分类'), findsOneWidget);
     expect(find.text('描述'), findsOneWidget);
 
-    // 初始状态 inProgress（FilledButton 高亮）、优先级高、描述带初始值
+    // 初始状态 inProgress（FilledButton 高亮）、优先级高、描述带初始值、分类带原分组名
     expect(
       find.descendant(
         of: find.byType(TaskDetailDialog),
@@ -115,6 +111,10 @@ void main() {
       find.byKey(const ValueKey('description-field')),
     );
     expect(field.controller!.text, '结项收尾沟通，落实结项各项事宜');
+    final categoryField = tester.widget<TextField>(
+      find.byKey(const ValueKey('category-field')),
+    );
+    expect(categoryField.controller!.text, 'business');
 
     // 关闭弹窗返回看板
     await tester.tap(find.byIcon(Icons.close));
@@ -122,7 +122,7 @@ void main() {
     expect(find.byType(TaskDetailDialog), findsNothing);
   });
 
-  testWidgets('弹窗状态推进：即改即存，看板即时刷新（任务换行）', (tester) async {
+  testWidgets('弹窗状态推进：即改即存，看板即时刷新（任务换列）', (tester) async {
     await pumpApp(tester);
 
     await tester.tap(find.text('客户项目结项推进'));
@@ -132,13 +132,13 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('status-reviewing')));
     await tester.pumpAndSettle();
 
-    // 看板即时刷新：任务从 inProgress 行移到 reviewing 行（弹窗仍开着）
+    // 看板即时刷新：任务从 inProgress 列移到 reviewing 列（弹窗仍开着）
     expect(
-      cellCard('business', 'inProgress', 'qtdata-project-closeout'),
+      columnCard('inProgress', 'qtdata-project-closeout'),
       findsNothing,
     );
     expect(
-      cellCard('business', 'reviewing', 'qtdata-project-closeout'),
+      columnCard('reviewing', 'qtdata-project-closeout'),
       findsOneWidget,
     );
   });
@@ -161,22 +161,22 @@ void main() {
     expect(find.text('结项收尾沟通，已确认验收时间'), findsOneWidget);
   });
 
-  testWidgets('已完成行默认折叠，点击行头展开', (tester) async {
+  testWidgets('已完成列默认折叠，点击列头展开', (tester) async {
     await pumpApp(tester);
 
     // 切到量潮云（含已完成任务）
     await tester.tap(find.text('量潮云'));
     await tester.pumpAndSettle();
 
-    // done 行默认折叠：任务卡片不渲染，显示折叠提示
+    // done 列默认折叠：任务卡片不渲染，显示折叠提示
     expect(
       find.byKey(const ValueKey('task-card-qtcloud-toolkit-refactor')),
       findsNothing,
     );
     expect(find.text('已折叠，点击展开'), findsOneWidget);
 
-    // 点击行头展开：任务可见
-    await tester.tap(find.byKey(const ValueKey('row-header-done')));
+    // 点击列头展开：任务可见
+    await tester.tap(find.byKey(const ValueKey('column-header-done')));
     await tester.pumpAndSettle();
     expect(
       find.byKey(const ValueKey('task-card-qtcloud-toolkit-refactor')),

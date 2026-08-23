@@ -10,16 +10,16 @@ import '../widgets/board_view.dart';
 import '../widgets/task_detail_dialog.dart';
 import '../widgets/task_list_switcher.dart';
 
-/// 执行云首页——业务清单的二维看板页面。
+/// 执行云首页——状态泳道看板页面。
 ///
-/// 接线：顶部清单切换器（TaskListCubit）+ 看板（BoardCubit 投影）+ 详情弹窗。
+/// 接线：顶部清单切换器（TaskListCubit）+ 看板（BoardCubit 状态列投影）+ 详情弹窗。
 /// Cubit 由上层 [MultiBlocProvider] 注入（main.dart），本页只消费不创建。
 ///
 /// 数据流（单向）：
 /// - initState → TaskListCubit.loadLists（清单动态加载）
 /// - currentListId 变化 → BoardCubit.loadTasks（清单切换看板跟随）
 /// - 卡片点击 → TaskDetailDialog（纯组件）→ onUpdated → BoardCubit.updateTask
-/// - 桌面拖拽跨行 → BoardCubit.updateTask（状态推进，只前进）
+/// - 桌面拖拽跨列 → BoardCubit.updateTask（状态推进，只前进）
 class TaskListScreen extends StatefulWidget {
   const TaskListScreen({super.key});
 
@@ -57,7 +57,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
     );
   }
 
-  /// 桌面拖拽跨行（状态推进）：目标状态不早于当前才推进（状态只前进）。
+  /// 桌面拖拽跨列（状态推进）：目标状态不早于当前才推进（状态只前进）。
   void _onDrop(Task task, TaskStatus targetStatus) {
     if (targetStatus.index < task.status.index) return;
     if (targetStatus == task.status) return;
@@ -87,7 +87,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
                     context.read<TaskListCubit>().switchList(id),
               ),
             ),
-            // 二维看板（列=分组 × 行=状态——投影在 Bloc 层完成，页面纯渲染）
+            // 状态泳道看板（列=状态——投影在 Bloc 层完成，页面纯渲染）
             Expanded(
               child: BlocBuilder<BoardCubit, BoardState>(
                 builder: (context, state) => BoardView(

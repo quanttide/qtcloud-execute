@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:qtcloud_execute_studio/models/task.dart';
-import 'package:qtcloud_execute_studio/models/task_list.dart';
 import 'package:qtcloud_execute_studio/repositories/task_repository.dart';
 import 'package:qtcloud_execute_studio/states/task_list_cubit.dart';
 
@@ -55,12 +54,16 @@ void main() {
 
       cubit.switchList('qtclass');
 
-      // 看板跟随——用当前清单 id 加载任务，得到 qtclass 的分组任务
-      final Map<Group, List<Task>> grouped =
-          await repository.loadTasks(cubit.state.currentListId!);
-      expect(grouped[Group.operation], hasLength(2));
-      expect(grouped[Group.product], hasLength(1));
-      expect(grouped[Group.business], isNull);
+      // 看板跟随——用当前清单 id 加载任务，得到 qtclass 的平铺任务
+      final List<Task> tasks = await repository.loadTasks(
+        cubit.state.currentListId!,
+      );
+      expect(tasks, hasLength(3));
+      expect(tasks.map((t) => t.id), [
+        'qtclass-recruitment',
+        'qtclass-mechanism',
+        'qtclass-innovation',
+      ]);
     });
 
     test('switchList 未知清单抛 ArgumentError，状态不变', () async {

@@ -12,40 +12,32 @@ abstract class TaskRepository {
   /// 加载全部业务清单（动态——不静态假设）
   Future<List<TaskList>> loadLists();
 
-  /// 加载指定清单的任务，按职能分组返回（看板投影数据源）
-  Future<Map<Group, List<Task>>> loadTasks(String listId);
+  /// 加载指定清单的任务（看板投影数据源）
+  Future<List<Task>> loadTasks(String listId);
 
-  /// 更新指定清单下指定分组中的任务：同 id 替换，不存在则新增
-  Future<void> updateTask(String listId, Group group, Task task);
+  /// 更新指定清单中的任务：同 id 替换，不存在则新增
+  Future<void> updateTask(String listId, Task task);
 
   /// 持久化到存储（本地文件原子写；内存实现为无操作）
   Future<void> save();
 }
 
-/// 清单聚合数据：清单元数据 + 分组任务（种子与保存共用的持久化形状）
+/// 清单聚合数据：清单元数据 + 任务（种子与保存共用的持久化形状）
 class TaskListData {
-  TaskListData({required this.id, required this.name, required this.groupTasks});
+  TaskListData({required this.id, required this.name, required this.tasks});
 
   /// 从 JSON 解析清单片段：
   /// ```json
-  /// {"id": "qtdata", "name": "量潮数据", "groups": [{"group": "product", "tasks": [...]}]}
+  /// {"id": "qtdata", "name": "量潮数据", "tasks": [...]}
   /// ```
-  factory TaskListData.fromJson(Map<String, dynamic> json) {
-    final groupTasks = <Group, List<Task>>{};
-    for (final g in json['groups'] as List<dynamic>) {
-      final m = g as Map<String, dynamic>;
-      final group = Group.fromWire(m['group'] as String);
-      groupTasks[group] = [
-        for (final t in m['tasks'] as List<dynamic>)
-          Task.fromJson(t as Map<String, dynamic>),
-      ];
-    }
-    return TaskListData(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      groupTasks: groupTasks,
-    );
-  }
+  factory TaskListData.fromJson(Map<String, dynamic> json) => TaskListData(
+    id: json['id'] as String,
+    name: json['name'] as String,
+    tasks: [
+      for (final t in json['tasks'] as List<dynamic>)
+        Task.fromJson(t as Map<String, dynamic>),
+    ],
+  );
 
   /// 业务标识
   final String id;
@@ -53,24 +45,17 @@ class TaskListData {
   /// 业务名称
   final String name;
 
-  /// 职能分组 → 任务列表
-  final Map<Group, List<Task>> groupTasks;
+  /// 清单内任务（直接归属）
+  final List<Task> tasks;
 
   /// JSON 序列化（保存/种子共用形状）
   Map<String, dynamic> toJson() => {
     'id': id,
     'name': name,
-    'groups': [
-      for (final entry in groupTasks.entries)
-        {
-          'group': entry.key.wire,
-          'tasks': [for (final t in entry.value) t.toJson()],
-        },
-    ],
+    'tasks': [for (final t in tasks) t.toJson()],
   };
 
-  TaskList toTaskList() =>
-      TaskList(id: id, name: name, groups: groupTasks.keys.toList());
+  TaskList toTaskList() => TaskList(id: id, name: name, tasks: tasks);
 }
 
 /// 种子/持久化文件的顶层形状：`{"lists": [...]}`
@@ -86,26 +71,21 @@ Map<String, dynamic> seedToJson(List<TaskListData> lists) => {
 
 /// 在聚合数据中更新任务：同 id 替换，不存在则新增。
 ///
-/// 清单或分组不存在时抛 [StateError]。
+/// 清单不存在时抛 [StateError]。
 void updateTaskInData(
   Map<String, TaskListData> data,
   String listId,
-  Group group,
   Task task,
 ) {
   final list = data[listId];
   if (list == null) {
     throw StateError('清单不存在：$listId');
   }
-  final tasks = list.groupTasks[group];
-  if (tasks == null) {
-    throw StateError('分组不存在：$listId/${group.wire}');
-  }
-  final index = tasks.indexWhere((t) => t.id == task.id);
+  final index = list.tasks.indexWhere((t) => t.id == task.id);
   if (index == -1) {
-    tasks.add(task);
+    list.tasks.add(task);
   } else {
-    tasks[index] = task;
+    list.tasks[index] = task;
   }
 }
 
@@ -126,17 +106,17 @@ class InMemoryTaskRepository implements TaskRepository {
       [for (final list in _lists.values) list.toTaskList()];
 
   @override
-  Future<Map<Group, List<Task>>> loadTasks(String listId) async {
+  Future<List<Task>> loadTasks(String listId) async {
     final list = _lists[listId];
     if (list == null) {
       throw StateError('清单不存在：$listId');
     }
-    return Map.unmodifiable(list.groupTasks);
+    return List<Task>.unmodifiable(list.tasks);
   }
 
   @override
-  Future<void> updateTask(String listId, Group group, Task task) async {
-    updateTaskInData(_lists, listId, group, task);
+  Future<void> updateTask(String listId, Task task) async {
+    updateTaskInData(_lists, listId, task);
   }
 
   @override
@@ -177,19 +157,19 @@ class LocalFileTaskRepository implements TaskRepository {
   }
 
   @override
-  Future<Map<Group, List<Task>>> loadTasks(String listId) async {
+  Future<List<Task>> loadTasks(String listId) async {
     final data = await _load();
     final list = data[listId];
     if (list == null) {
       throw StateError('清单不存在：$listId');
     }
-    return Map.unmodifiable(list.groupTasks);
+    return List<Task>.unmodifiable(list.tasks);
   }
 
   @override
-  Future<void> updateTask(String listId, Group group, Task task) async {
+  Future<void> updateTask(String listId, Task task) async {
     final data = await _load();
-    updateTaskInData(data, listId, group, task);
+    updateTaskInData(data, listId, task);
   }
 
   @override

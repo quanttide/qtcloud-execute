@@ -3,120 +3,106 @@
     {
       "id": "qtdata",
       "name": "量潮数据",
-      "groups": [
+      "tasks": [
         {
-          "group": "business",
-          "tasks": [
-            {
-              "id": "qtdata-project-closeout",
-              "title": "客户项目结项推进",
-              "description": "结项收尾沟通，落实结项各项事宜",
-              "status": "inProgress",
-              "priority": "high"
-            },
-            {
-              "id": "qtdata-project-review",
-              "title": "客户项目复盘",
-              "description": "复盘框架已搭建，技术复现完成待复盘",
-              "status": "reviewing",
-              "priority": "medium"
-            }
-          ]
+          "id": "qtdata-project-closeout",
+          "title": "客户项目结项推进",
+          "description": "结项收尾沟通，落实结项各项事宜",
+          "status": "inProgress",
+          "priority": "high",
+          "category": "business"
         },
         {
-          "group": "product",
-          "tasks": [
-            {
-              "id": "qtdata-reproduction",
-              "title": "客户项目复现",
-              "description": "数据契约/蓝图/spec 已完成，数据清洗中",
-              "status": "inProgress",
-              "priority": "high"
-            },
-            {
-              "id": "qtdata-product-research",
-              "title": "数据产品调研",
-              "description": "产品组定位与能力边界梳理，云页面设计推进",
-              "status": "reviewing",
-              "priority": "medium"
-            }
-          ]
+          "id": "qtdata-project-review",
+          "title": "客户项目复盘",
+          "description": "复盘框架已搭建，技术复现完成待复盘",
+          "status": "reviewing",
+          "priority": "medium",
+          "category": "business"
+        },
+        {
+          "id": "qtdata-reproduction",
+          "title": "客户项目复现",
+          "description": "数据契约/蓝图/spec 已完成，数据清洗中",
+          "status": "inProgress",
+          "priority": "high",
+          "category": "product"
+        },
+        {
+          "id": "qtdata-product-research",
+          "title": "数据产品调研",
+          "description": "产品组定位与能力边界梳理，云页面设计推进",
+          "status": "reviewing",
+          "priority": "medium",
+          "category": "product"
         }
       ]
     },
     {
       "id": "qtclass",
       "name": "量潮课堂",
-      "groups": [
+      "tasks": [
         {
-          "group": "operation",
-          "tasks": [
-            {
-              "id": "qtclass-recruitment",
-              "title": "实训基地招聘运营",
-              "description": "群搭建完成，招聘全流程运转（准入问卷→入营→实训→考核）",
-              "status": "inProgress",
-              "priority": "urgent"
-            },
-            {
-              "id": "qtclass-mechanism",
-              "title": "招聘考核机制提案",
-              "description": "微型创业/双路径/额度制/行为即信号，决策机制分层已确定",
-              "status": "inProgress",
-              "priority": "high"
-            }
-          ]
+          "id": "qtclass-recruitment",
+          "title": "实训基地招聘运营",
+          "description": "群搭建完成，招聘全流程运转（准入问卷→入营→实训→考核）",
+          "status": "inProgress",
+          "priority": "urgent",
+          "category": "operation"
         },
         {
-          "group": "product",
-          "tasks": [
-            {
-              "id": "qtclass-innovation",
-              "title": "课堂创新原型",
-              "description": "三轮迭代完成，组件拆解迁移实验室，UI 设计收尾",
-              "status": "reviewing",
-              "priority": "medium"
-            }
-          ]
+          "id": "qtclass-mechanism",
+          "title": "招聘考核机制提案",
+          "description": "微型创业/双路径/额度制/行为即信号，决策机制分层已确定",
+          "status": "inProgress",
+          "priority": "high",
+          "category": "operation"
+        },
+        {
+          "id": "qtclass-innovation",
+          "title": "课堂创新原型",
+          "description": "三轮迭代完成，组件拆解迁移实验室，UI 设计收尾",
+          "status": "reviewing",
+          "priority": "medium",
+          "category": "product"
         }
       ]
     },
     {
       "id": "qtcloud",
       "name": "量潮云",
-      "groups": [
+      "tasks": [
         {
-          "group": "product",
-          "tasks": [
-            {
-              "id": "qtcloud-finance-deploy",
-              "title": "财务平台部署",
-              "description": "ACR 实例凭证待确认，已发 issue",
-              "status": "inProgress",
-              "priority": "urgent"
-            },
-            {
-              "id": "qtcloud-agenda-iteration",
-              "title": "议事管理迭代",
-              "description": "议事云 0.1 已发布，议事管理 v0.1 迭代中",
-              "status": "reviewing",
-              "priority": "high"
-            },
-            {
-              "id": "qtcloud-toolkit-refactor",
-              "title": "工具库实验室重构",
-              "description": "quanttide-platform 分解，quanttide 0.2.0 发布 PyPI",
-              "status": "done",
-              "priority": "medium"
-            },
-            {
-              "id": "qtcloud-doc-center",
-              "title": "文档中心上线",
-              "description": "量潮文档中心搭建完成并发布上线通知",
-              "status": "done",
-              "priority": "low"
-            }
-          ]
+          "id": "qtcloud-finance-deploy",
+          "title": "财务平台部署",
+          "description": "ACR 实例凭证待确认，已发 issue",
+          "status": "inProgress",
+          "priority": "urgent",
+          "category": "product"
+        },
+        {
+          "id": "qtcloud-agenda-iteration",
+          "title": "议事管理迭代",
+          "description": "议事云 0.1 已发布，议事管理 v0.1 迭代中",
+          "status": "reviewing",
+          "priority": "high",
+          "category": "product"
+        },
+        {
+          "id": "qtcloud-toolkit-refactor",
+          "title": "工具库实验室重构",
+          "description": "quanttide-platform 分解，quanttide 0.2.0 发布 PyPI",
+          "status": "done",
+          "priority": "medium",
+          "category": "product"
+        },
+        {
+          "id": "qtcloud-doc-center",
+          "title": "文档中心上线",
+          "description": "量潮文档中心搭建完成并发布上线通知",
+          "status": "done",
+          "priority": "low",
+          "category": "product"
         }
       ]
     }

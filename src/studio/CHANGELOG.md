@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## [Unreleased]
+
+### Changed
+
+- 取消 TaskGroup（删除 Group 枚举与 TaskList.groups），降级为 `Task.category` 字段（String?，业务自定义分类方式，不枚举约束）
+- 看板改为状态泳道：列=状态（未开始/进行中/评审中/已完成）四列固定，任务直接属于清单，拖拽跨列=状态推进
+- 任务详情弹窗增加分类字段显示/编辑（TextField 可选，保存时 trim，空置 null）
+- 仓储接口去分组：`loadTasks(listId)` 返回平铺任务列表，`updateTask(listId, task)` 不再带 group 参数
+
+### Removed
+
+- 删除 Group 枚举、TaskList.groups、BoardProjection 分组维度（分组×状态矩阵 → 状态列→任务流）
+
 ## [0.1.0-beta.1] - 2026-08-23
 
 ### Added

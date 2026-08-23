@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:qtcloud_execute_studio/models/task.dart';
-import 'package:qtcloud_execute_studio/models/task_list.dart';
 import 'package:qtcloud_execute_studio/repositories/task_repository.dart';
 import 'package:qtcloud_execute_studio/states/board_cubit.dart';
 
@@ -26,68 +25,56 @@ void main() {
     tearDown(() => cubit.close());
 
     test('初始状态：空投影', () {
-      expect(cubit.state.tasks.matrix, isEmpty);
+      expect(cubit.state.tasks.columns, isEmpty);
     });
 
-    test('loadTasks 投影为 分组×状态 矩阵（列=分组，行=状态）', () async {
+    test('loadTasks 投影为状态列泳道（四列固定，任务按状态归列）', () async {
       await cubit.loadTasks('qtdata');
 
       final BoardProjection projection = cubit.state.tasks;
-      // 列 = 该清单实际存在的分组
-      expect(projection.matrix.keys.toSet(),
-          {Group.business, Group.product});
-      // 行 = 全部四状态（每个分组行完整）
-      for (final group in projection.matrix.keys) {
-        expect(projection.matrix[group]!.keys.toSet(),
-            TaskStatus.values.toSet());
-      }
-      // qtdata：business 列 inProgress/reviewing 各 1 个任务
+      // 四列固定（推进阶梯完整）
+      expect(projection.columns.keys.toSet(), TaskStatus.values.toSet());
+      // qtdata：inProgress 列 2 个任务、reviewing 列 2 个、其余为空
       expect(
-          projection
-              .tasksOf(Group.business, TaskStatus.inProgress)
-              .map((t) => t.id),
-          ['qtdata-project-closeout']);
+        projection.tasksOf(TaskStatus.inProgress).map((t) => t.id),
+        ['qtdata-project-closeout', 'qtdata-reproduction'],
+      );
       expect(
-          projection
-              .tasksOf(Group.business, TaskStatus.reviewing)
-              .map((t) => t.id),
-          ['qtdata-project-review']);
-      expect(
-          projection
-              .tasksOf(Group.product, TaskStatus.inProgress)
-              .map((t) => t.id),
-          ['qtdata-reproduction']);
-      // 未出现状态行为空
-      expect(projection.tasksOf(Group.business, TaskStatus.notStarted),
-          isEmpty);
+        projection.tasksOf(TaskStatus.reviewing).map((t) => t.id),
+        ['qtdata-project-review', 'qtdata-product-research'],
+      );
+      expect(projection.tasksOf(TaskStatus.notStarted), isEmpty);
+      expect(projection.tasksOf(TaskStatus.done), isEmpty);
     });
 
     test('清单切换：loadTasks 新清单，看板投影跟随', () async {
       await cubit.loadTasks('qtdata');
-      expect(cubit.state.tasks.matrix.keys.toSet(),
-          {Group.business, Group.product});
+      expect(
+        cubit.state.tasks.tasksOf(TaskStatus.inProgress),
+        hasLength(2),
+      );
 
       await cubit.loadTasks('qtclass');
 
       final BoardProjection projection = cubit.state.tasks;
-      expect(projection.matrix.keys.toSet(),
-          {Group.operation, Group.product});
+      expect(projection.columns.keys.toSet(), TaskStatus.values.toSet());
       expect(
-          projection
-              .tasksOf(Group.operation, TaskStatus.inProgress)
-              .map((t) => t.id),
-          ['qtclass-recruitment', 'qtclass-mechanism']);
+        projection.tasksOf(TaskStatus.inProgress).map((t) => t.id),
+        ['qtclass-recruitment', 'qtclass-mechanism'],
+      );
       expect(
-          projection.tasksOf(Group.product, TaskStatus.reviewing).map((t) => t.id),
-          ['qtclass-innovation']);
-      expect(projection.matrix.containsKey(Group.business), isFalse);
+        projection.tasksOf(TaskStatus.reviewing).map((t) => t.id),
+        ['qtclass-innovation'],
+      );
+      // qtclass 无已完成任务
+      expect(projection.tasksOf(TaskStatus.done), isEmpty);
     });
 
-    test('updateTask 状态推进后重投影：任务换行', () async {
+    test('updateTask 状态推进后重投影：任务换列', () async {
       await cubit.loadTasks('qtdata');
 
       final Task base = cubit.state.tasks
-          .tasksOf(Group.business, TaskStatus.inProgress)
+          .tasksOf(TaskStatus.inProgress)
           .firstWhere((t) => t.id == 'qtdata-project-closeout');
       final Task advanced = base.advanceTo(TaskStatus.done);
 
@@ -95,48 +82,48 @@ void main() {
 
       final BoardProjection projection = cubit.state.tasks;
       expect(
-          projection
-              .tasksOf(Group.business, TaskStatus.inProgress)
-              .map((t) => t.id),
-          isNot(contains('qtdata-project-closeout')));
+        projection.tasksOf(TaskStatus.inProgress).map((t) => t.id),
+        isNot(contains('qtdata-project-closeout')),
+      );
       expect(
-          projection
-              .tasksOf(Group.business, TaskStatus.done)
-              .map((t) => t.id),
-          contains('qtdata-project-closeout'));
+        projection.tasksOf(TaskStatus.done).map((t) => t.id),
+        contains('qtdata-project-closeout'),
+      );
       // 仓储同步更新
-      final Map<Group, List<Task>> stored =
-          await repository.loadTasks('qtdata');
-      final Task storedTask = stored[Group.business]!
-          .firstWhere((t) => t.id == 'qtdata-project-closeout');
+      final List<Task> stored = await repository.loadTasks('qtdata');
+      final Task storedTask = stored.firstWhere(
+        (t) => t.id == 'qtdata-project-closeout',
+      );
       expect(storedTask.status, TaskStatus.done);
     });
 
-    test('updateTask 修改描述/优先级后重投影保留更新', () async {
+    test('updateTask 修改描述/优先级/category 后重投影保留更新', () async {
       await cubit.loadTasks('qtdata');
 
       final Task base = cubit.state.tasks
-          .tasksOf(Group.product, TaskStatus.inProgress)
+          .tasksOf(TaskStatus.inProgress)
           .firstWhere((t) => t.id == 'qtdata-reproduction');
       final Task updated = base.copyWith(
         description: '数据清洗完成，进入交付。',
         priority: TaskPriority.urgent,
+        category: '数据产品',
       );
 
       await cubit.updateTask(updated);
 
       final Task projected = cubit.state.tasks
-          .tasksOf(Group.product, TaskStatus.inProgress)
+          .tasksOf(TaskStatus.inProgress)
           .firstWhere((t) => t.id == 'qtdata-reproduction');
       expect(projected.description, '数据清洗完成，进入交付。');
       expect(projected.priority, TaskPriority.urgent);
+      expect(projected.category, '数据产品');
     });
 
     test('状态流转：只前进（允许跳级），回退抛 StateError', () async {
       await cubit.loadTasks('qtdata');
 
       final Task base = cubit.state.tasks
-          .tasksOf(Group.business, TaskStatus.inProgress)
+          .tasksOf(TaskStatus.inProgress)
           .firstWhere((t) => t.id == 'qtdata-project-closeout');
       // 跳级前进：inProgress → done
       final Task jumped = base.advanceTo(TaskStatus.done);
@@ -147,18 +134,19 @@ void main() {
       // 原地前进视为无操作
       expect(jumped.advanceTo(TaskStatus.done), same(jumped));
 
-      // 更新后重投影为 done 行
+      // 更新后重投影为 done 列
       await cubit.updateTask(jumped);
       expect(
-          cubit.state.tasks.tasksOf(Group.business, TaskStatus.done),
-          contains(jumped));
+        cubit.state.tasks.tasksOf(TaskStatus.done),
+        contains(jumped),
+      );
     });
 
     test('updateTask 更新后的任务可被再次加载并投影', () async {
       await cubit.loadTasks('qtdata');
 
       final Task base = cubit.state.tasks
-          .tasksOf(Group.product, TaskStatus.inProgress)
+          .tasksOf(TaskStatus.inProgress)
           .firstWhere((t) => t.id == 'qtdata-reproduction');
       final Task advanced = base.advanceTo(TaskStatus.reviewing);
       await cubit.updateTask(advanced);
@@ -166,24 +154,35 @@ void main() {
       // 重新 loadTasks 后投影一致（仓储持久化）
       await cubit.loadTasks('qtdata');
       expect(
-          cubit.state.tasks
-              .tasksOf(Group.product, TaskStatus.reviewing)
-              .map((t) => t.id),
-          contains('qtdata-reproduction'));
+        cubit.state.tasks
+            .tasksOf(TaskStatus.reviewing)
+            .map((t) => t.id),
+        contains('qtdata-reproduction'),
+      );
     });
 
-    test('updateTask 未知任务（不在当前清单）抛 StateError', () async {
+    test('updateTask 新增任务（id 不存在）→ 追加到清单并投影', () async {
       await cubit.loadTasks('qtdata');
 
-      const Task alien = Task(
-        id: 'qtclass-recruitment',
-        title: '实训基地招聘运营',
+      const Task created = Task(
+        id: 'qtdata-new',
+        title: '新增任务',
         description: '',
-        status: TaskStatus.inProgress,
-        priority: TaskPriority.urgent,
+        status: TaskStatus.notStarted,
+        priority: TaskPriority.low,
+        category: 'business',
       );
 
-      await expectLater(cubit.updateTask(alien), throwsStateError);
+      await cubit.updateTask(created);
+
+      // 投影含新任务（notStarted 列）
+      expect(
+        cubit.state.tasks.tasksOf(TaskStatus.notStarted).map((t) => t.id),
+        contains('qtdata-new'),
+      );
+      // 仓储持久化
+      final List<Task> stored = await repository.loadTasks('qtdata');
+      expect(stored, hasLength(5)); // 4 已有 + 1 新增
     });
 
     test('loadTasks 未指定清单时抛 StateError', () async {

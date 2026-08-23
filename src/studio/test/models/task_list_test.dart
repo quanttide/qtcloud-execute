@@ -1,50 +1,89 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:qtcloud_execute_studio/models/task.dart';
 import 'package:qtcloud_execute_studio/models/task_list.dart';
 
 void main() {
-  group('Group 枚举', () {
-    test('固定三职能：business / product / operation', () {
-      expect(Group.values, [Group.business, Group.product, Group.operation]);
-      expect(Group.business.label, '业务');
-      expect(Group.product.label, '产品');
-      expect(Group.operation.label, '运营');
-    });
-
-    test('fromWire 解析与未知值拒绝', () {
-      expect(Group.fromWire('business'), Group.business);
-      expect(Group.fromWire('product'), Group.product);
-      expect(Group.fromWire('operation'), Group.operation);
-      expect(() => Group.fromWire('finance'), throwsArgumentError);
-    });
-  });
-
   group('TaskList JSON 序列化', () {
-    test('toJson → fromJson 往返无损', () {
+    test('toJson → fromJson 往返无损（含任务列表）', () {
       const list = TaskList(
         id: 'qtdata',
         name: '量潮数据',
-        groups: [Group.business, Group.product, Group.operation],
+        tasks: [
+          Task(
+            id: 't-1',
+            title: '客户项目结项推进',
+            description: '结项收尾沟通',
+            status: TaskStatus.inProgress,
+            priority: TaskPriority.high,
+            category: 'business',
+          ),
+          Task(
+            id: 't-2',
+            title: '数据产品调研',
+            description: '',
+            status: TaskStatus.reviewing,
+            priority: TaskPriority.medium,
+          ),
+        ],
       );
 
       final Map<String, dynamic> json = list.toJson();
       expect(json, {
         'id': 'qtdata',
         'name': '量潮数据',
-        'groups': ['business', 'product', 'operation'],
+        'tasks': [
+          {
+            'id': 't-1',
+            'title': '客户项目结项推进',
+            'description': '结项收尾沟通',
+            'status': 'inProgress',
+            'priority': 'high',
+            'category': 'business',
+          },
+          {
+            'id': 't-2',
+            'title': '数据产品调研',
+            'description': '',
+            'status': 'reviewing',
+            'priority': 'medium',
+            'category': null,
+          },
+        ],
       });
 
       final TaskList restored = TaskList.fromJson(json);
       expect(restored.id, list.id);
       expect(restored.name, list.name);
-      expect(restored.groups, list.groups);
+      expect(restored.tasks, hasLength(2));
+      expect(restored.tasks.map((t) => t.id), ['t-1', 't-2']);
+      expect(restored.tasks.first.category, 'business');
+      expect(restored.tasks.last.category, isNull);
     });
 
-    test('分组定义可子集（业务清单不必覆盖全部职能）', () {
-      const list = TaskList(id: 'qtcloud', name: '量潮云', groups: [Group.product]);
-      expect(list.hasGroup(Group.product), isTrue);
-      expect(list.hasGroup(Group.business), isFalse);
-      expect(list.hasGroup(Group.operation), isFalse);
+    test('任务直接属于清单（无分组层级）', () {
+      const list = TaskList(
+        id: 'qtcloud',
+        name: '量潮云',
+        tasks: [
+          Task(
+            id: 'c-1',
+            title: '财务平台部署',
+            description: '',
+            status: TaskStatus.inProgress,
+            priority: TaskPriority.urgent,
+          ),
+        ],
+      );
+
+      expect(list.tasks, hasLength(1));
+      expect(list.tasks.single.title, '财务平台部署');
+      // tasks 字段缺省时解析为空列表（旧数据兼容）
+      final TaskList noTasks = TaskList.fromJson({
+        'id': 'empty',
+        'name': '空清单',
+      });
+      expect(noTasks.tasks, isEmpty);
     });
   });
 }

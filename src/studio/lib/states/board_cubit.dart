@@ -1,51 +1,36 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../models/task.dart';
-import '../models/task_list.dart';
 import '../repositories/task_repository.dart';
 
-/// 看板投影：列=分组 × 行=状态 的二维矩阵。
+/// 看板投影：状态列 → 任务流。
 ///
-/// 矩阵完整：每个分组含全部四状态行（空行返回空列表——页面渲染空占位）。
+/// 四列固定为 [TaskStatus.values]（列完整——空列返回空列表——页面渲染空占位）。
 class BoardProjection {
-  const BoardProjection(this.matrix);
+  const BoardProjection(this.columns);
 
-  /// 从仓储分组数据投影为 分组×状态 矩阵。
+  /// 从任务列表投影为 状态列→任务 映射。
   ///
-  /// 只含该清单实际存在的分组列；行固定为 [TaskStatus.values] 全部状态。
-  factory BoardProjection.fromGrouped(Map<Group, List<Task>> grouped) {
+  /// 只含 [TaskStatus.values] 四列；任务按状态归入对应列。
+  factory BoardProjection.fromTasks(List<Task> tasks) {
     return BoardProjection({
-      for (final entry in grouped.entries)
-        // 显式类型参数：Map.unmodifiable 的泛型无法向嵌套字面量传导
-        entry.key: Map<TaskStatus, List<Task>>.unmodifiable({
-          for (final status in TaskStatus.values)
-            status: List<Task>.unmodifiable([
-              for (final t in entry.value)
-                if (t.status == status) t,
-            ]),
-        }),
+      // 显式类型参数：Map.unmodifiable 的泛型无法向嵌套字面量传导
+      for (final status in TaskStatus.values)
+        status: List<Task>.unmodifiable([
+          for (final t in tasks)
+            if (t.status == status) t,
+        ]),
     });
   }
 
-  /// 分组 × 状态 → 任务列表
-  final Map<Group, Map<TaskStatus, List<Task>>> matrix;
+  /// 状态列 → 任务列表
+  final Map<TaskStatus, List<Task>> columns;
 
-  /// 取某分组某状态下的任务；分组或状态不存在返回空列表。
-  List<Task> tasksOf(Group group, TaskStatus status) =>
-      matrix[group]?[status] ?? const [];
-
-  /// 按任务 id 反查所属分组；不在当前投影中返回 null。
-  Group? groupOf(String taskId) {
-    for (final entry in matrix.entries) {
-      if (entry.value.values.any((tasks) => tasks.any((t) => t.id == taskId))) {
-        return entry.key;
-      }
-    }
-    return null;
-  }
+  /// 取某状态列下的任务；状态不存在返回空列表。
+  List<Task> tasksOf(TaskStatus status) => columns[status] ?? const [];
 }
 
-/// 看板层状态：分组×状态 投影矩阵（页面只渲染矩阵）。
+/// 看板层状态：状态列投影（页面只渲染状态泳道）。
 class BoardState {
   const BoardState({this.tasks = const BoardProjection({})});
 
@@ -65,7 +50,7 @@ class BoardCubit extends Cubit<BoardState> {
   final TaskRepository _repository;
   String? _listId;
 
-  /// 加载当前清单任务并投影为 分组×状态 矩阵。
+  /// 加载当前清单任务并投影为 状态列→任务 泳道。
   ///
   /// 传 [listId] 切换目标清单（清单切换跟随）；省略沿用上次清单。
   /// 尚未指定清单时抛 [StateError]。
@@ -75,25 +60,21 @@ class BoardCubit extends Cubit<BoardState> {
     if (id == null) {
       throw StateError('尚未指定清单：先调用 loadTasks(listId)');
     }
-    final grouped = await _repository.loadTasks(id);
-    emit(BoardState(tasks: BoardProjection.fromGrouped(grouped)));
+    final tasks = await _repository.loadTasks(id);
+    emit(BoardState(tasks: BoardProjection.fromTasks(tasks)));
   }
 
   /// 更新任务（弹窗/拖拽操作后）：写入仓储并重新投影。
   ///
-  /// 任务分组从当前投影按 id 反查（Task 模型不含分组字段）；
-  /// 任务不在当前清单时抛 [StateError]。
+  /// 任务直接归属清单（同 id 替换，不存在新增）；任务不在当前清单时
+  /// 由仓储按 id 追加/替换，Cubit 不额外校验分组。
   Future<void> updateTask(Task task) async {
     final id = _listId;
     if (id == null) {
       throw StateError('尚未加载清单：先调用 loadTasks');
     }
-    final group = state.tasks.groupOf(task.id);
-    if (group == null) {
-      throw StateError('任务不在当前清单：${task.id}');
-    }
-    await _repository.updateTask(id, group, task);
-    final grouped = await _repository.loadTasks(id);
-    emit(BoardState(tasks: BoardProjection.fromGrouped(grouped)));
+    await _repository.updateTask(id, task);
+    final tasks = await _repository.loadTasks(id);
+    emit(BoardState(tasks: BoardProjection.fromTasks(tasks)));
   }
 }
