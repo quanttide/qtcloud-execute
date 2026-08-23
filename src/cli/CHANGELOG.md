@@ -2,6 +2,12 @@
 
 本文件仅记录 **cli（量潮执行云 CLI，Rust，纯服务端客户端）** 的版本变更。studio / provider 各自维护自己的 CHANGELOG。
 
+## [0.1.0-alpha.2] - 2026-08-23
+
+- ci(cli)：`release-cli` 工作流增加 crates.io 发布（`cargo publish`，需 secret `CRATES_API_TOKEN`）
+- cli：Cargo 元数据补齐（description/license/repository/authors/readme），`version` 对齐 `0.1.0-alpha.2`；contract 登记 `cli` scope `registry: crates`
+- 验证：`cargo publish --dry-run` 通过（crates.io 接受该 crate）
+
 ## [0.1.0-alpha.1] - 2026-08-23
 
 - cli：改为纯服务端客户端（`--server` / 环境变量 `QTCLOUD_EXECUTE_API_BASE_URL`），对接 provider HTTP API，不再读写本地文件
