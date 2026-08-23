@@ -109,17 +109,3 @@ footer {
   padding-top: 32px;
   border-top: 1px solid #e2e8f0;
 }
-
-footer p + p {
-  margin-top: 6px;
-}
-
-.footer-link {
-  color: #94a3b8;
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-
-.footer-link:hover {
-  color: #64748b;
-}

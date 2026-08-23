@@ -55,11 +55,6 @@ function App() {
 
       <footer>
         <p>执行云 · execute.cloud.quanttide.com</p>
-        <p>
-          <a className="footer-link" href="https://studio.execute.cloud.quanttide.com" target="_blank" rel="noreferrer">
-            进入工作台 →
-          </a>
-        </p>
       </footer>
     </div>
   );
