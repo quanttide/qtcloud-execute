@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.1.0-beta.4] - 2026-08-23
+
+- studio：CDN 域名改为 `studio.execute.cloud.quanttide.com`（原 `execute.cloud.quanttide.com` 移交 site）
+
 ## [0.1.0-beta.3] - 2026-08-23
 
 - studio：客户端接入服务端 API——清单/任务经系统级 API 网关 `api.quanttide.com/qtcloud-execute` 读取，移除内置种子资产与本地文件持久化

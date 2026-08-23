@@ -13,7 +13,7 @@ variable "bucket_name" {
 variable "cdn_domain" {
   description = "studio CDN 加速域名"
   type        = string
-  default     = "execute.cloud.quanttide.com"
+  default     = "studio.execute.cloud.quanttide.com"
 }
 
 variable "cdn_scope" {

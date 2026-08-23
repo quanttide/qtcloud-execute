@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.1.0-beta.4] - 2026-08-23
+
+### Added
+
+- studio：客户端域名迁至 `studio.execute.cloud.quanttide.com`（原 `execute.cloud.quanttide.com` 移交站点）
+
 ## [0.1.0-beta.3] - 2026-08-23
 
 ### Added
