@@ -40,7 +40,7 @@ void main() {
   }
 
   group('TaskDetailDialog 渲染', () {
-    testWidgets('弹窗渲染五字段（title/状态/优先级/分类/描述）', (tester) async {
+    testWidgets('弹窗渲染五字段（title/状态/优先级/类别/描述）', (tester) async {
       await pumpDialog(tester);
 
       expect(find.byType(TaskDetailDialog), findsOneWidget);
@@ -55,8 +55,8 @@ void main() {
       for (final priority in TaskPriority.values) {
         expect(find.text(priority.label), findsOneWidget);
       }
-      // 分类（可编辑输入框，初始值为 task.category）
-      expect(find.text('分类'), findsOneWidget);
+      // 类别（可编辑输入框，初始值为 task.category）
+      expect(find.text('类别'), findsOneWidget);
       final categoryField = tester.widget<TextField>(
         find.byKey(const ValueKey('category-field')),
       );
@@ -87,24 +87,23 @@ void main() {
     });
   });
 
-  group('TaskDetailDialog 状态流转（只前进）', () {
-    testWidgets('非法回退禁用、前进合法可点', (tester) async {
+  group('TaskDetailDialog 状态流转（真看板自由来回）', () {
+    testWidgets('全部状态可选（无非法回退禁用）', (tester) async {
       await pumpDialog(tester); // 初始 inProgress
 
-      // 回退目标（notStarted）禁用
-      final back = tester.widget<OutlinedButton>(
-        find.byKey(const ValueKey('status-notStarted')),
+      // 所有非当前状态均为可点 OutlinedButton（前进与回退均合法）
+      for (final status in TaskStatus.values) {
+        if (status == TaskStatus.inProgress) continue;
+        final btn = tester.widget<OutlinedButton>(
+          find.byKey(ValueKey('status-${status.wire}')),
+        );
+        expect(btn.onPressed, isNotNull);
+      }
+      // 当前状态为 FilledButton
+      final current = tester.widget<FilledButton>(
+        find.byKey(const ValueKey('status-inProgress')),
       );
-      expect(back.onPressed, isNull);
-      // 前进目标（reviewing/done）合法可点
-      final reviewing = tester.widget<OutlinedButton>(
-        find.byKey(const ValueKey('status-reviewing')),
-      );
-      expect(reviewing.onPressed, isNotNull);
-      final done = tester.widget<OutlinedButton>(
-        find.byKey(const ValueKey('status-done')),
-      );
-      expect(done.onPressed, isNotNull);
+      expect(current.onPressed, isNotNull);
     });
 
     testWidgets('点击前进触发 onUpdated（含跳级）', (tester) async {
@@ -120,31 +119,23 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('status-done')));
       await tester.pump();
       expect(updated.last.status, TaskStatus.done);
-
-      // done 后无合法前进目标：inProgress 回退目标全部禁用
-      final back = tester.widget<OutlinedButton>(
-        find.byKey(const ValueKey('status-inProgress')),
-      );
-      expect(back.onPressed, isNull);
     });
 
-    testWidgets('点击禁用目标不触发 onUpdated（回退拒绝）', (tester) async {
-      final updated = await pumpDialog(tester);
+    testWidgets('点击回退也触发 onUpdated（真看板——退回重做）', (tester) async {
+      final updated = await pumpDialog(tester); // 初始 inProgress
 
-      // 回退目标按钮禁用——点击无效（onPressed null）
-      final back = tester.widget<OutlinedButton>(
-        find.byKey(const ValueKey('status-notStarted')),
-      );
-      expect(back.onPressed, isNull);
-      await tester.tap(
-        find.byKey(const ValueKey('status-notStarted')),
-        warnIfMissed: false,
-      );
+      // 回退到 notStarted
+      await tester.tap(find.byKey(const ValueKey('status-notStarted')));
       await tester.pump();
-      expect(updated, isEmpty);
+      expect(updated.last.status, TaskStatus.notStarted);
+
+      // 再从 notStarted 前进回 inProgress（任意方向）
+      await tester.tap(find.byKey(const ValueKey('status-inProgress')));
+      await tester.pump();
+      expect(updated.last.status, TaskStatus.inProgress);
     });
 
-    testWidgets('原地前进视为无操作（不重复回调）', (tester) async {
+    testWidgets('点击当前状态视为无操作（不重复回调）', (tester) async {
       final updated = await pumpDialog(tester);
 
       // 当前状态是 FilledButton（点击不产生变更）

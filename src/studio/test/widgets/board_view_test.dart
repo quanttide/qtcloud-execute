@@ -19,16 +19,20 @@ void main() {
   Future<void> pumpBoard(
     WidgetTester tester, {
     required BoardProjection projection,
+    Map<TaskStatus, int> wipLimits = const {},
     ValueChanged<Task>? onTaskTap,
     void Function(Task task, TaskStatus targetStatus)? onTaskDrop,
+    ValueChanged<TaskStatus>? onCreateTask,
   }) {
     return tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
           body: BoardView(
             projection: projection,
+            wipLimits: wipLimits,
             onTaskTap: onTaskTap,
             onTaskDrop: onTaskDrop,
+            onCreateTask: onCreateTask,
           ),
         ),
       ),
@@ -42,7 +46,7 @@ void main() {
   );
 
   group('BoardView 状态泳道渲染', () {
-    testWidgets('列=状态 四列固定，任务按状态归列', (tester) async {
+    testWidgets('列=状态 四列固定，任务按状态归列（全部列展开）', (tester) async {
       final projection = BoardProjection.fromTasks([
         task('doing1', '进行中任务', TaskStatus.inProgress, TaskPriority.high),
         task('new1', '未开始任务', TaskStatus.notStarted, TaskPriority.medium),
@@ -54,21 +58,20 @@ void main() {
       for (final status in TaskStatus.values) {
         expect(find.text(status.label), findsOneWidget);
       }
-      // 任务落在对应状态列
+      // 任务落在对应状态列（真看板——无折叠，done 列也渲染）
       expect(columnCard('notStarted', 'new1'), findsOneWidget);
       expect(columnCard('inProgress', 'doing1'), findsOneWidget);
-      // 折叠列（done 默认折叠）内任务不渲染
-      expect(columnCard('done', 'done1'), findsNothing);
+      expect(columnCard('done', 'done1'), findsOneWidget);
     });
 
-    testWidgets('空列显示"暂无任务"占位（不空白）', (tester) async {
+    testWidgets('空列显示"暂无任务"占位（不空白，四列恒展开）', (tester) async {
       final projection = BoardProjection.fromTasks([
         task('doing1', '进行中任务', TaskStatus.inProgress, TaskPriority.high),
       ]);
       await pumpBoard(tester, projection: projection);
 
-      // 可见列（done 默认折叠）中空列：inProgress 非空，notStarted/reviewing 空
-      expect(find.text('暂无任务'), findsNWidgets(2));
+      // inProgress 非空，其余三列空（notStarted/reviewing/done）
+      expect(find.text('暂无任务'), findsNWidgets(3));
     });
 
     testWidgets('列内按 priority 排序（紧急→高→中→低）', (tester) async {
@@ -91,43 +94,40 @@ void main() {
     });
   });
 
-  group('BoardView 列折叠', () {
-    testWidgets('已完成列默认折叠，点击列头展开/收起', (tester) async {
+  group('BoardView WIP 徽章', () {
+    testWidgets('有上限时显示 count/limit；超限标红', (tester) async {
       final projection = BoardProjection.fromTasks([
-        task('done1', '已完成任务', TaskStatus.done, TaskPriority.medium),
-        task('doing1', '进行中任务', TaskStatus.inProgress, TaskPriority.high),
+        task('b1', '任务1', TaskStatus.inProgress, TaskPriority.high),
+        task('b2', '任务2', TaskStatus.inProgress, TaskPriority.medium),
       ]);
-      await pumpBoard(tester, projection: projection);
+      // WIP 上限 = 1：inProgress 有 2 个任务，超限
+      await pumpBoard(
+        tester,
+        projection: projection,
+        wipLimits: const {TaskStatus.inProgress: 1},
+      );
 
-      // 默认折叠：done 列任务不渲染，显示折叠提示
-      expect(find.byKey(const ValueKey('task-card-done1')), findsNothing);
-      expect(find.text('已折叠，点击展开'), findsOneWidget);
-      // 其他列不受影响
-      expect(find.byKey(const ValueKey('task-card-doing1')), findsOneWidget);
-
-      // 点击列头展开
-      await tester.tap(find.byKey(const ValueKey('column-header-done')));
-      await tester.pumpAndSettle();
-      expect(find.byKey(const ValueKey('task-card-done1')), findsOneWidget);
-      expect(find.text('已折叠，点击展开'), findsNothing);
-
-      // 再次点击收起
-      await tester.tap(find.byKey(const ValueKey('column-header-done')));
-      await tester.pumpAndSettle();
-      expect(find.byKey(const ValueKey('task-card-done1')), findsNothing);
-      expect(find.text('已折叠，点击展开'), findsOneWidget);
+      final badgeContainer = find.byKey(
+        const ValueKey('wip-badge-inProgress'),
+      );
+      // badge 是 Container 包装的 Text，直接查文本
+      expect(badgeContainer, findsOneWidget);
+      expect(find.text('2/1'), findsOneWidget);
     });
 
-    testWidgets('非已完成列默认展开', (tester) async {
+    testWidgets('未设上限的列不显示 WIP 徽章，显示计数', (tester) async {
       final projection = BoardProjection.fromTasks([
-        task('b1', '进行中任务', TaskStatus.inProgress, TaskPriority.high),
+        task('b1', '任务1', TaskStatus.inProgress, TaskPriority.high),
       ]);
-      await pumpBoard(tester, projection: projection);
+      await pumpBoard(
+        tester,
+        projection: projection,
+        wipLimits: const {TaskStatus.inProgress: 3},
+      );
 
-      // 非已完成列默认展开：任务卡片可见
-      expect(find.byKey(const ValueKey('task-card-b1')), findsOneWidget);
-      // 折叠提示仅来自 done 列（默认折叠）
-      expect(find.text('已折叠，点击展开'), findsOneWidget);
+      expect(find.byKey(const ValueKey('wip-badge-inProgress')), findsOneWidget);
+      // 未设上限的列（如 done）显示计数而非徽章
+      expect(find.byKey(const ValueKey('column-count-done')), findsOneWidget);
     });
   });
 
@@ -145,7 +145,7 @@ void main() {
       expect(tapped?.id, 'b1');
     });
 
-    testWidgets('拖拽跨列回调 onTaskDrop（状态推进）', (tester) async {
+    testWidgets('拖拽跨列回调 onTaskDrop（实时状态变更）', (tester) async {
       final projection = BoardProjection.fromTasks([
         task('b1', '进行中任务', TaskStatus.inProgress, TaskPriority.high),
       ]);
@@ -189,6 +189,33 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(targetStatus, TaskStatus.inProgress);
+    });
+
+    testWidgets('列头「+」回调 onCreateTask（目标状态列）', (tester) async {
+      final projection = BoardProjection.fromTasks([
+        task('b1', '进行中任务', TaskStatus.inProgress, TaskPriority.high),
+      ]);
+      TaskStatus? createStatus;
+      await pumpBoard(
+        tester,
+        projection: projection,
+        onCreateTask: (s) => createStatus = s,
+      );
+
+      await tester.tap(find.byKey(const ValueKey('create-task-notStarted')));
+      await tester.pumpAndSettle();
+
+      expect(createStatus, TaskStatus.notStarted);
+    });
+
+    testWidgets('未提供 onCreateTask 时不显示「+」', (tester) async {
+      final projection = BoardProjection.fromTasks([
+        task('b1', '进行中任务', TaskStatus.inProgress, TaskPriority.high),
+      ]);
+      await pumpBoard(tester, projection: projection);
+
+      expect(find.byIcon(Icons.add), findsNothing);
+      expect(find.byIcon(Icons.close), findsNothing);
     });
   });
 }

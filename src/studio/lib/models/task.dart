@@ -1,6 +1,6 @@
 /// 任务状态：未开始 / 进行中 / 评审中 / 已完成
 ///
-/// 状态只前进不后退（notStarted → inProgress → reviewing → done）。
+/// 看板泳道列——任务可在任意状态间自由来回（推进与回退均合法）。
 enum TaskStatus {
   /// 未开始
   notStarted('notStarted', '未开始'),
@@ -127,15 +127,12 @@ class Task {
     category: identical(category, _unset) ? this.category : category as String?,
   );
 
-  /// 状态流转（只前进）：推进到 [next]。
+  /// 状态流转：移动到 [target]（任意方向，可前进也可回退）。
   ///
-  /// - 允许跳级前进（如 notStarted → done）；
+  /// - 看板拖拽/弹窗切换直接改状态用 moveTo（真看板语义——任务可自由来回）；
   /// - 目标与当前相同视为无操作，返回自身；
-  /// - 非法回退（目标状态早于当前状态）抛 [StateError]。
-  Task advanceTo(TaskStatus next) {
-    if (next.index < status.index) {
-      throw StateError('状态只前进：$status 不能回退到 $next');
-    }
-    return next == status ? this : copyWith(status: next);
+  /// - 不做方向约束（回退合法——任务可能被退回重做）。
+  Task moveTo(TaskStatus target) {
+    return target == status ? this : copyWith(status: target);
   }
 }

@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../models/task.dart';
 
-/// 看板单元格内的最小展示单元——title + priority 色点。
+/// 看板单元格内的最小展示单元——title + priority 色点，卡片带投影（真看板形态）。
 ///
 /// 状态不在此显示（状态已由看板所在行表达，不重复）。
-/// 点击打开详情弹窗（[onTap]）；桌面端可拖拽跨行（[onDragEnd]）。
+/// 点击打开详情弹窗（[onTap]）；桌面端可拖拽跨列（[onDragEnd]）。
 class TaskCard extends StatelessWidget {
   const TaskCard({
     super.key,
@@ -20,7 +20,7 @@ class TaskCard extends StatelessWidget {
   /// 点击回调（打开详情弹窗）
   final VoidCallback? onTap;
 
-  /// 拖拽结束回调（桌面跨行——状态推进）
+  /// 拖拽结束回调（桌面跨列——实时状态变更）
   final void Function(DraggableDetails details)? onDragEnd;
 
   /// 优先级色点颜色：紧急红 / 高橙 / 中蓝 / 低灰——行内排序依据
@@ -37,6 +37,8 @@ class TaskCard extends StatelessWidget {
     final Widget card = Material(
       color: theme.colorScheme.surfaceContainerLow,
       borderRadius: BorderRadius.circular(8),
+      elevation: 2,
+      shadowColor: Colors.black.withValues(alpha: 0.25),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(8),
@@ -67,8 +69,32 @@ class TaskCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodyMedium,
                     ),
+                    const SizedBox(height: 4),
+                    // 优先级标签（文字 + 颜色，直观可见）
+                    Container(
+                      key: ValueKey('priority-label-${task.id}'),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 1,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colorOf(task.priority).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: colorOf(task.priority),
+                          width: 0.8,
+                        ),
+                      ),
+                      child: Text(
+                        task.priority.label,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: colorOf(task.priority),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                     if (task.description.isNotEmpty) ...[
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 4),
                       Text(
                         task.description,
                         maxLines: 1,
@@ -87,12 +113,12 @@ class TaskCard extends StatelessWidget {
       ),
     );
 
-    // 始终可拖拽（桌面跨行由看板 DragTarget 承接）；抬起阴影 + 源位降透明度
+    // 始终可拖拽（桌面跨列由看板 DragTarget 承接）；抬起阴影 + 源位降透明度
     return Draggable<Task>(
       data: task,
       onDragEnd: onDragEnd,
       feedback: Material(
-        elevation: 6,
+        elevation: 8,
         borderRadius: BorderRadius.circular(8),
         child: card,
       ),

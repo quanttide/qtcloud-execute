@@ -112,7 +112,7 @@ void main() {
     });
   });
 
-  group('Task 状态流转（只前进）', () {
+  group('Task 状态流转（moveTo 自由来回）', () {
     const task = Task(
       id: 't-1',
       title: '标题',
@@ -122,43 +122,38 @@ void main() {
     );
 
     test('合法推进：未开始 → 进行中 → 评审中 → 已完成', () {
-      final Task inProgress = task.advanceTo(TaskStatus.inProgress);
+      final Task inProgress = task.moveTo(TaskStatus.inProgress);
       expect(inProgress.status, TaskStatus.inProgress);
       // 其余字段不变
       expect(inProgress.id, task.id);
       expect(inProgress.title, task.title);
       expect(inProgress.priority, task.priority);
 
-      final Task reviewing = inProgress.advanceTo(TaskStatus.reviewing);
+      final Task reviewing = inProgress.moveTo(TaskStatus.reviewing);
       expect(reviewing.status, TaskStatus.reviewing);
 
-      final Task done = reviewing.advanceTo(TaskStatus.done);
+      final Task done = reviewing.moveTo(TaskStatus.done);
       expect(done.status, TaskStatus.done);
     });
 
     test('允许跳级前进：未开始 → 已完成', () {
-      final Task done = task.advanceTo(TaskStatus.done);
+      final Task done = task.moveTo(TaskStatus.done);
       expect(done.status, TaskStatus.done);
     });
 
-    test('推进到相同状态视为无操作，返回自身', () {
-      expect(task.advanceTo(TaskStatus.notStarted), same(task));
+    test('允许回退（真看板——任务可退回重做）', () {
+      final Task inProgress = task.moveTo(TaskStatus.inProgress);
+      // 进行中 → 未开始（回退合法）
+      final Task back = inProgress.moveTo(TaskStatus.notStarted);
+      expect(back.status, TaskStatus.notStarted);
+
+      final Task done = task.moveTo(TaskStatus.done);
+      final Task undone = done.moveTo(TaskStatus.reviewing);
+      expect(undone.status, TaskStatus.reviewing);
     });
 
-    test('非法回退抛 StateError：进行中 → 未开始', () {
-      final Task inProgress = task.advanceTo(TaskStatus.inProgress);
-      expect(
-        () => inProgress.advanceTo(TaskStatus.notStarted),
-        throwsStateError,
-      );
-    });
-
-    test('非法回退抛 StateError：已完成 → 评审中', () {
-      final Task done = task.advanceTo(TaskStatus.done);
-      expect(
-        () => done.advanceTo(TaskStatus.reviewing),
-        throwsStateError,
-      );
+    test('移动到相同状态视为无操作，返回自身', () {
+      expect(task.moveTo(TaskStatus.notStarted), same(task));
     });
 
     test('copyWith 只改指定字段', () {

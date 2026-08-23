@@ -1,90 +1,73 @@
 import 'package:flutter/material.dart';
 
 import '../models/task.dart';
+import '../states/board_cubit.dart';
 
-/// 任务详情弹窗——清单内就地操作，不跳页。
+/// 新建任务弹窗（列头「+」触发）——目标状态列由调用方指定。
 ///
-/// 纯组件：不持有 Cubit/仓储。状态/优先级点选即改、描述编辑保存，
-/// 所有变更通过 [onUpdated] 回调交给页面（页面负责写仓储并刷新看板）。
-///
-/// 状态任意选择（真看板——自由来回，不限定只前进）。
-class TaskDetailDialog extends StatefulWidget {
-  const TaskDetailDialog({
+/// 纯组件：不持有 Cubit/仓储。标题/分类/优先级/描述表单，
+/// 提交后通过 [onCreate] 回调交付 [TaskDraft]（id/status 由 Cubit 生成/指定）。
+class TaskCreateDialog extends StatefulWidget {
+  const TaskCreateDialog({
     super.key,
-    required this.task,
-    required this.onUpdated,
+    required this.status,
+    required this.onCreate,
   });
 
-  /// 初始任务（清单页传入）
-  final Task task;
+  /// 新建任务的目标状态列（列头「+」所在列）
+  final TaskStatus status;
 
-  /// 变更回调（清单页刷新列表——本组件不写仓储）
-  final ValueChanged<Task> onUpdated;
+  /// 提交回调（页面调用 BoardCubit.createTask）
+  final ValueChanged<TaskDraft> onCreate;
 
   /// 便捷打开：showDialog 包装
   static Future<void> show(
     BuildContext context, {
-    required Task task,
-    required ValueChanged<Task> onUpdated,
+    required TaskStatus status,
+    required ValueChanged<TaskDraft> onCreate,
   }) {
     return showDialog<void>(
       context: context,
-      builder: (_) => TaskDetailDialog(task: task, onUpdated: onUpdated),
+      builder: (_) =>
+          TaskCreateDialog(status: status, onCreate: onCreate),
     );
   }
 
   @override
-  State<TaskDetailDialog> createState() => _TaskDetailDialogState();
+  State<TaskCreateDialog> createState() => _TaskCreateDialogState();
 }
 
-class _TaskDetailDialogState extends State<TaskDetailDialog> {
-  /// 弹窗内草稿——每处变更即改即存（回调）
-  late Task _draft;
-
+class _TaskCreateDialogState extends State<TaskCreateDialog> {
+  late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
   late final TextEditingController _categoryController;
+  TaskPriority _priority = TaskPriority.medium;
 
   @override
   void initState() {
     super.initState();
-    _draft = widget.task;
-    _descriptionController = TextEditingController(
-      text: widget.task.description,
-    );
-    _categoryController = TextEditingController(text: widget.task.category);
+    _titleController = TextEditingController();
+    _descriptionController = TextEditingController();
+    _categoryController = TextEditingController();
   }
 
   @override
   void dispose() {
+    _titleController.dispose();
     _descriptionController.dispose();
     _categoryController.dispose();
     super.dispose();
   }
 
-  /// 应用变更：更新草稿并回调（页面写仓储、看板即时刷新）
-  void _apply(Task next) {
-    setState(() => _draft = next);
-    widget.onUpdated(next);
-  }
-
-  /// 状态变更（真看板——任意方向选择，自由来回）。
-  ///
-  /// 复用领域方法 [Task.moveTo]；同状态视为无操作（不回调）。
-  void _setStatus(TaskStatus status) {
-    final next = _draft.moveTo(status);
-    if (identical(next, _draft)) return;
-    _apply(next);
-  }
-
-  void _setPriority(TaskPriority priority) {
-    _apply(_draft.copyWith(priority: priority));
-  }
-
-  /// 保存描述 + 分类：trim 后提交（分类为空置 null——业务自定义，可选）。
-  void _save() {
-    _apply(
-      _draft.copyWith(
+  /// 提交：trim 后组装 TaskDraft；标题为空不提交。
+  void _submit() {
+    final title = _titleController.text.trim();
+    if (title.isEmpty) return;
+    widget.onCreate(
+      TaskDraft(
+        title: title,
         description: _descriptionController.text,
+        priority: _priority,
         category: _categoryController.text.trim().isEmpty
             ? null
             : _categoryController.text.trim(),
@@ -101,16 +84,16 @@ class _TaskDetailDialogState extends State<TaskDetailDialog> {
         constraints: const BoxConstraints(maxWidth: 480),
         child: Padding(
           padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 标题 + 关闭
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               Row(
                 children: [
                   Expanded(
                     child: Text(
-                      _draft.title,
+                      '新建任务 · ${widget.status.label}',
                       style: theme.textTheme.titleLarge,
                     ),
                   ),
@@ -124,14 +107,15 @@ class _TaskDetailDialogState extends State<TaskDetailDialog> {
               const SizedBox(height: 16),
               _buildSection(
                 context,
-                title: '状态',
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final status in TaskStatus.values)
-                      _buildStatusButton(status),
-                  ],
+                title: '标题',
+                child: TextField(
+                  key: const ValueKey('create-title-field'),
+                  controller: _titleController,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: '一句话概括任务…',
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -152,11 +136,11 @@ class _TaskDetailDialogState extends State<TaskDetailDialog> {
                 context,
                 title: '类别',
                 child: TextField(
-                  key: const ValueKey('category-field'),
+                  key: const ValueKey('create-category-field'),
                   controller: _categoryController,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
-                    hintText: '业务自定义类别（可选，如 business / product / operation）…',
+                    hintText: '业务自定义分类（可选，如 business / product）…',
                   ),
                 ),
               ),
@@ -165,7 +149,7 @@ class _TaskDetailDialogState extends State<TaskDetailDialog> {
                 context,
                 title: '描述',
                 child: TextField(
-                  key: const ValueKey('description-field'),
+                  key: const ValueKey('create-description-field'),
                   controller: _descriptionController,
                   maxLines: 3,
                   decoration: const InputDecoration(
@@ -178,12 +162,13 @@ class _TaskDetailDialogState extends State<TaskDetailDialog> {
               Align(
                 alignment: Alignment.centerRight,
                 child: FilledButton(
-                  key: const ValueKey('save-description'),
-                  onPressed: _save,
-                  child: const Text('保存'),
+                  key: const ValueKey('create-submit'),
+                  onPressed: _submit,
+                  child: const Text('创建'),
                 ),
               ),
             ],
+            ),
           ),
         ),
       ),
@@ -211,37 +196,19 @@ class _TaskDetailDialogState extends State<TaskDetailDialog> {
     );
   }
 
-  /// 状态按钮：当前态高亮（FilledButton），其余全部可选（OutlinedButton，
-  /// 真看板自由来回——无非法回退禁用）。
-  Widget _buildStatusButton(TaskStatus status) {
-    final isCurrent = status == _draft.status;
-    if (isCurrent) {
-      return FilledButton(
-        key: ValueKey('status-${status.wire}'),
-        onPressed: () => _setStatus(status),
-        child: Text(status.label),
-      );
-    }
-    return OutlinedButton(
-      key: ValueKey('status-${status.wire}'),
-      onPressed: () => _setStatus(status),
-      child: Text(status.label),
-    );
-  }
-
-  /// 优先级按钮：当前档高亮，四档均可选（单选）
+  /// 优先级按钮：当前档高亮（FilledButton），其余可选（OutlinedButton）。
   Widget _buildPriorityButton(TaskPriority priority) {
-    final isCurrent = priority == _draft.priority;
+    final isCurrent = priority == _priority;
     if (isCurrent) {
       return FilledButton(
-        key: ValueKey('priority-${priority.wire}'),
-        onPressed: () => _setPriority(priority),
+        key: ValueKey('create-priority-${priority.wire}'),
+        onPressed: () => setState(() => _priority = priority),
         child: Text(priority.label),
       );
     }
     return OutlinedButton(
-      key: ValueKey('priority-${priority.wire}'),
-      onPressed: () => _setPriority(priority),
+      key: ValueKey('create-priority-${priority.wire}'),
+      onPressed: () => setState(() => _priority = priority),
       child: Text(priority.label),
     );
   }

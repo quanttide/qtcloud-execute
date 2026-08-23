@@ -75,11 +75,17 @@ void main() {
       expect(TaskCard.colorOf(TaskPriority.low), Colors.grey);
     });
 
-    testWidgets('状态不显示（由看板行表达，卡片不重复）', (tester) async {
-      await pumpCard(tester);
+    testWidgets('状态不显示，优先级标签显示（卡片展示优先级信息）', (tester) async {
+      await pumpCard(tester); // baseTask: inProgress / urgent
 
+      // 状态文案不显示（由看板行表达，卡片不重复）
       expect(find.text('进行中'), findsNothing);
-      expect(find.text('紧急'), findsNothing);
+      // 优先级标签显示（本次新增——卡片直观展示优先级）
+      expect(find.text('紧急'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('priority-label-t1')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('空 description 不显示摘要行', (tester) async {
@@ -95,7 +101,7 @@ void main() {
       );
 
       expect(find.text('无描述任务'), findsOneWidget);
-      // 只有一张卡片，description 为空不渲染摘要
+      // 只有一张卡片：description 为空不渲染摘要；但 priority label 显示
       final texts = tester
           .widgetList<Text>(find.descendant(
             of: find.byType(TaskCard),
@@ -103,7 +109,8 @@ void main() {
           ))
           .map((t) => t.data)
           .toList();
-      expect(texts.where((t) => t != null && t.isNotEmpty), ['无描述任务']);
+      // 非空文本 = 标题 + 优先级标签（低）；无 description 摘要
+      expect(texts.where((t) => t != null && t.isNotEmpty), ['无描述任务', '低']);
     });
   });
 
