@@ -9,6 +9,7 @@
 | scope      | 目录              | CHANGELOG                | 最近版本 |
 |------------|-------------------|--------------------------|----------|
 | `studio`   | `src/studio/`     | `src/studio/CHANGELOG.md` | 0.1.0-beta.4 |
+| `site`     | `src/site/`       | `src/site/CHANGELOG.md`   | 0.1.0-alpha.1 |
 | `provider` | `src/provider/`   | `src/provider/CHANGELOG.md` | 0.1.0-alpha.2 |
 | `cli`      | `src/cli/`        | `src/cli/CHANGELOG.md`    | 0.1.0-alpha.1 |
 
