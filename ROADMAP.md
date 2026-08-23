@@ -32,17 +32,17 @@
 
 ## 阶段 4：页面收敛 + 旧代码删除
 
-- [ ] `screens/task_list_screen.dart`：二维看板页面（切换器 + BoardView + 弹窗）
-- [ ] 删除旧代码：screens/tasks.dart、screens/task_detail.dart、widgets/task_archive.dart、widgets/task_sections.dart
-- [ ] router 简化（仅清单页——详情走弹窗）
-- [ ] 集成验证：analyze 零问题 + 全测试绿 + build web
+- [x] `screens/task_list_screen.dart`：二维看板页面（切换器 + BoardView + 弹窗）
+- [x] 删除旧代码：screens/tasks.dart、screens/task_detail.dart、widgets/task_archive.dart、widgets/task_sections.dart
+- [x] router 简化（仅清单页——详情走弹窗）
+- [x] 集成验证：analyze 零问题 + 全测试绿 + build web
 
 ## 验收
 
-- [ ] 二维看板可用：清单切换（动态）→ 分组×状态矩阵 → 卡片点击弹窗操作
-- [ ] 状态只前进、优先级四档（AI 建议 + 人确认）
-- [ ] 弹窗操作即改即存，看板即时刷新
-- [ ] 旧代码全部删除，无残留
+- [x] 二维看板可用：清单切换（动态）→ 分组×状态矩阵 → 卡片点击弹窗操作
+- [x] 状态只前进、优先级四档（AI 建议 + 人确认）
+- [x] 弹窗操作即改即存，看板即时刷新
+- [x] 旧代码全部删除，无残留
 
 ## 后续（验证后决定）
 
