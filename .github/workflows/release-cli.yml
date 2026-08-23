@@ -1,8 +1,8 @@
-# 发布 CLI：推送 tag（cli/*，如 cli/v0.1.0-alpha.2）时，
-# 先 check（版本/changelog 校验，见 src/cli/scripts/），再 build-binaries（多平台矩阵），再 publish-crate（crates.io）。
+# 发布 CLI：推送 tag（cli/*，如 cli/v0.1.0-alpha.2）时：
+#   check → build-binaries（多平台矩阵）→ publish-crate（crates.io，qtcloud-devops 惯例）
+#   另保留 attach-release：把各平台二进制挂到 GitHub Release（发布资产）。
 #
-# 结构对齐 qtcloud-devops/.github/workflows/release-cli.yml；
-# 仅去掉 Python 相关（build-package / publish-pypi）——qtcloud-execute cli 为纯 Rust 二进制，无 pyproject/maturin。
+# 结构对齐 qtcloud-devops/.github/workflows/release-cli.yml；无 Python（maturin/PyPI 相关省略）。
 
 name: release-cli
 
@@ -78,3 +78,35 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: publish to crates.io
         run: cargo publish --allow-dirty --token ${{ secrets.CRATES_API_TOKEN }}
+
+  # 保留：发布二进制到 GitHub Release（各平台产物，目标名后缀区分）
+  attach-release:
+    needs: build-binaries
+    if: startsWith(github.ref, 'refs/tags/cli/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - name: download binaries
+        uses: actions/download-artifact@v5
+        with:
+          pattern: qtcloud-execute-*
+          path: dist
+      - name: attach to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1 || \
+            gh release create "${GITHUB_REF_NAME}" --title "${GITHUB_REF_NAME}" --generate-notes
+          for dir in dist/qtcloud-execute-*; do
+            [ -d "$dir" ] || continue
+            target="${dir#dist/qtcloud-execute-}"
+            for bin in "$dir"/*; do
+              [ -f "$bin" ] || continue
+              name="qtcloud-execute-${target}"
+              [[ "$bin" == *.exe ]] && name="${name}.exe"
+              echo "attach: ${bin} -> ${name}"
+              gh release upload "${GITHUB_REF_NAME}" "${bin}#${name}" --clobber
+            done
+          done
