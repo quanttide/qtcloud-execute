@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## [0.1.0-beta.3] - 2026-08-23
+
+### Added
+
+- 客户端接入服务端 API（`ApiTaskRepository`）：清单/任务经系统级 API 网关 `https://api.quanttide.com/qtcloud-execute` 读取，不再内置种子
+- API 基地址经 `--dart-define=QTCLOUD_EXECUTE_API_BASE_URL` 注入（部署流水线 repo 变量，对齐 qtcloud-delib 规范）
+- 应用层零 CORS（跨域由系统级网关统一处理，与 qtcloud-delib 一致）
+
+### Removed
+
+- 移除内置种子数据 `assets/data/seed_tasks.json` 与 loader `lib/data/seed_tasks.dart`
+- 移除 `LocalFileTaskRepository`（本地文件持久化，`dart:io`）
+- 运行数据完全依赖服务端（服务端从 OSS `data/tasks.json` 读取）
+
 ## [0.1.0-beta.2] - 2026-08-23
 
 ### Added

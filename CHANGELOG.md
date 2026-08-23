@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.0-beta.3] - 2026-08-23
+
+- studio：客户端接入服务端 API——清单/任务经系统级 API 网关 `api.quanttide.com/qtcloud-execute` 读取，移除内置种子资产与本地文件持久化
+- studio：API 基地址改为 `--dart-define=QTCLOUD_EXECUTE_API_BASE_URL`（对齐 qtcloud-delib 规范），应用层零 CORS（网关统一处理）
+- provider：移除应用层 CORS（交由系统级 API 网关），运行时数据改从 OSS `data/tasks.json` 读取
+- iac：系统级 API 网关登记 `qtcloud-execute` 任务清单 API（`/qtcloud-execute/*`，`ServiceTimeout=60s`）
+
 ## [0.1.0-alpha.2] - 2026-08-23
 
 - fix(provider)：运行时任务数据 OSS 桶更名为 `qtcloud-execute-provider`（原 `qtcloud-execute-data`），并同步 FC 环境变量 `ALIYUN_OSS_BUCKET`

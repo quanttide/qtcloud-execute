@@ -10,15 +10,15 @@ studio 领域模型已从旧 GTD 重模型（name/requirement/goal/roles/phases�
 **方案 A 真看板**重构：清单（项目）作为隔离单元，状态列泳道看板，
 `Task.category` 作类别过滤器，任务可自由来回（非只前进）。
 
-## 已落地（0.1.0-beta.2）
+## 已落地（0.1.0-beta.3）
 
 ### 领域层（模型 + 仓储）
 
 - [x] `models/task.dart`：Task（id/title/description/status/priority/category）+ 枚举（四态/四档）
 - [x] `models/task_list.dart`：TaskList（业务清单——任务直接归属，无分组层级）
-- [x] `repositories/task_repository.dart`：仓储（DDD——种子/本地文件，可注入）
-- [x] `assets/data/seed_tasks.json` 重写：新模型种子数据
-- [x] 单测：Task JSON 往返 / 分类可选 / TaskList 归属 / 仓储读写
+- [x] `repositories/task_repository.dart`：仓储（DDD——内存 / 服务端 API，可注入）
+- [x] `ApiTaskRepository`：经系统级 API 网关 `api.quanttide.com/qtcloud-execute` 读写，客户端不再内置种子（服务端数据为主）
+- [x] 单测：Task JSON 往返 / 分类可选 / TaskList 归属 / 仓储读写（fixture `test/fixtures/tasks.json`）
 
 ### 状态层（Bloc）
 
