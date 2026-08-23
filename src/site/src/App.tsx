@@ -9,6 +9,9 @@ function App() {
         <p className="positioning">
           把人的能力系统性转译成系统的能力——让执行从「靠人记得」变成「靠系统看清」。
         </p>
+        <a className="cta" href="https://studio.execute.cloud.quanttide.com" target="_blank" rel="noreferrer">
+          进入执行云 →
+        </a>
       </header>
 
       <section className="pain">
@@ -52,6 +55,11 @@ function App() {
 
       <footer>
         <p>执行云 · execute.cloud.quanttide.com</p>
+        <p>
+          <a className="footer-link" href="https://studio.execute.cloud.quanttide.com" target="_blank" rel="noreferrer">
+            进入工作台 →
+          </a>
+        </p>
       </footer>
     </div>
   );

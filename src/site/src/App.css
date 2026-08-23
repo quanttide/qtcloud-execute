@@ -31,6 +31,24 @@
   color: #64748b;
 }
 
+.cta {
+  display: inline-block;
+  margin-top: 28px;
+  padding: 12px 28px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  background: #1e40af;
+  border-radius: 999px;
+  text-decoration: none;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.cta:hover {
+  background: #1e3a8a;
+  transform: translateY(-1px);
+}
+
 section {
   margin: 64px 0;
 }
@@ -90,4 +108,18 @@ footer {
   color: #94a3b8;
   padding-top: 32px;
   border-top: 1px solid #e2e8f0;
+}
+
+footer p + p {
+  margin-top: 6px;
+}
+
+.footer-link {
+  color: #94a3b8;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer-link:hover {
+  color: #64748b;
 }
