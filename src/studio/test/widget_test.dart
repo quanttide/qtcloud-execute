@@ -9,15 +9,15 @@ import 'package:qtcloud_execute_studio/repositories/task_repository.dart';
 import 'package:qtcloud_execute_studio/widgets/task_create_dialog.dart';
 import 'package:qtcloud_execute_studio/widgets/task_detail_dialog.dart';
 
-/// 从种子文件同步读取构建内存仓储（注入给应用，避免真实 asset 通道竞态）
-Future<TaskRepository> loadSeedRepositoryFromFile() async {
-  final String raw = File('test/fixtures/seed_tasks.json').readAsStringSync();
+/// 从测试夹具同步读取构建内存仓储（注入给应用，避免真实 asset 通道竞态）
+Future<TaskRepository> loadFixtureRepository() async {
+  final String raw = File('test/fixtures/tasks.json').readAsStringSync();
   return InMemoryTaskRepository.fromJson(jsonDecode(raw) as Map<String, dynamic>);
 }
 
 Future<void> pumpApp(WidgetTester tester) async {
   await tester.pumpWidget(
-    QuantTideExecuteStudioApp(loadRepository: loadSeedRepositoryFromFile),
+    QuantTideExecuteStudioApp(loadRepository: loadFixtureRepository),
   );
   await tester.pumpAndSettle();
 }

@@ -60,7 +60,7 @@ enum Command {
     },
 }
 
-// ─── 数据模型（对齐 seed tasks.json 结构） ───
+// ─── 数据模型（对齐 tasks.json 结构） ───
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct Task {
@@ -112,7 +112,7 @@ fn load(path: &PathBuf) -> Result<TaskList, String> {
     }
 }
 
-/// 写回数据文件（2 空格缩进，与 seed 格式一致；父目录不存在时自动创建）
+/// 写回数据文件（2 空格缩进，与 tasks.json 格式一致；父目录不存在时自动创建）
 fn save(path: &PathBuf, tl: &TaskList) -> Result<(), String> {
     if let Some(parent) = path.parent() {
         if !parent.as_os_str().is_empty() {

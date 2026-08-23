@@ -37,7 +37,7 @@ abstract class TaskRepository {
   Future<void> save();
 }
 
-/// 清单聚合数据：清单元数据 + 任务（种子与保存共用的持久化形状）
+/// 清单聚合数据：清单元数据 + 任务（API/持久化共用形状）
 class TaskListData {
   TaskListData({required this.id, required this.name, required this.tasks});
 
@@ -63,7 +63,7 @@ class TaskListData {
   /// 清单内任务（直接归属）
   final List<Task> tasks;
 
-  /// JSON 序列化（保存/种子共用形状）
+  /// JSON 序列化（保存/API 共用形状）
   Map<String, dynamic> toJson() => {
     'id': id,
     'name': name,
@@ -73,14 +73,14 @@ class TaskListData {
   TaskList toTaskList() => TaskList(id: id, name: name, tasks: tasks);
 }
 
-/// 种子/持久化文件的顶层形状：`{"lists": [...]}`
-List<TaskListData> parseSeedJson(Map<String, dynamic> json) => [
+/// 清单文件的顶层形状：`{"lists": [...]}`
+List<TaskListData> parseListsJson(Map<String, dynamic> json) => [
   for (final e in json['lists'] as List<dynamic>)
     TaskListData.fromJson(e as Map<String, dynamic>),
 ];
 
-/// 序列化回顶层形状（save 写回 / 种子构造）
-Map<String, dynamic> seedToJson(List<TaskListData> lists) => {
+/// 序列化回顶层形状（持久化写回）
+Map<String, dynamic> listsToJson(List<TaskListData> lists) => {
   'lists': [for (final list in lists) list.toJson()],
 };
 
@@ -108,10 +108,10 @@ void updateTaskInData(
 class InMemoryTaskRepository implements TaskRepository {
   InMemoryTaskRepository(this._lists);
 
-  /// 从种子 JSON（顶层 `{"lists": [...]}`）构建
+  /// 从清单 JSON（顶层 `{"lists": [...]}`）构建
   factory InMemoryTaskRepository.fromJson(Map<String, dynamic> json) =>
       InMemoryTaskRepository({
-        for (final list in parseSeedJson(json)) list.id: list,
+        for (final list in parseListsJson(json)) list.id: list,
       });
 
   final Map<String, TaskListData> _lists;
@@ -164,7 +164,7 @@ class ApiTaskRepository implements TaskRepository {
   Future<List<TaskList>> loadLists() async {
     final json = await _getJson('/api/lists');
     return [
-      for (final list in parseSeedJson(json)) list.toTaskList(),
+      for (final list in parseListsJson(json)) list.toTaskList(),
     ];
   }
 

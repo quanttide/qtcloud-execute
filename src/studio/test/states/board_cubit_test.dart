@@ -7,9 +7,9 @@ import 'package:qtcloud_execute_studio/models/task.dart';
 import 'package:qtcloud_execute_studio/repositories/task_repository.dart';
 import 'package:qtcloud_execute_studio/states/board_cubit.dart';
 
-/// 读取种子文件（测试 cwd 为 src/studio）
-Map<String, dynamic> readSeedJson() =>
-    jsonDecode(File('test/fixtures/seed_tasks.json').readAsStringSync())
+/// 读取测试夹具（测试 cwd 为 src/studio）
+Map<String, dynamic> readFixtureJson() =>
+    jsonDecode(File('test/fixtures/tasks.json').readAsStringSync())
         as Map<String, dynamic>;
 
 void main() {
@@ -18,7 +18,7 @@ void main() {
     late BoardCubit cubit;
 
     setUp(() {
-      repository = InMemoryTaskRepository.fromJson(readSeedJson());
+      repository = InMemoryTaskRepository.fromJson(readFixtureJson());
       cubit = BoardCubit(repository);
     });
 

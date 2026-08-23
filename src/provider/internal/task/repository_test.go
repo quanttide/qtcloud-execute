@@ -9,8 +9,8 @@ import (
 	"github.com/quanttide/qtcloud-execute-provider/internal/store"
 )
 
-// seedData 对齐 tasks.json 结构的最小样例
-const seedData = `{
+// sampleData 对齐 tasks.json 结构的最小样例
+const sampleData = `{
   "lists": [
     {
       "id": "qtdata",
@@ -66,7 +66,7 @@ func newTestRepo(t *testing.T, data string) (*Repository, string) {
 }
 
 func TestListLists_Load(t *testing.T) {
-	repo, _ := newTestRepo(t, seedData)
+	repo, _ := newTestRepo(t, sampleData)
 
 	lists, err := repo.ListLists()
 	if err != nil {
@@ -81,7 +81,7 @@ func TestListLists_Load(t *testing.T) {
 	if len(lists[0].Tasks) != 2 {
 		t.Errorf("qtdata 任务数 = %d, 期望 2", len(lists[0].Tasks))
 	}
-	// category 解析（可空字段，seed 中非空）
+	// category 解析（可空字段，样例中非空）
 	t0 := lists[0].Tasks[0]
 	if t0.Category == nil || *t0.Category != "business" {
 		t.Errorf("category = %v, 期望 business", t0.Category)
@@ -89,7 +89,7 @@ func TestListLists_Load(t *testing.T) {
 }
 
 func TestListTasks_Ok(t *testing.T) {
-	repo, _ := newTestRepo(t, seedData)
+	repo, _ := newTestRepo(t, sampleData)
 
 	tasks, err := repo.ListTasks("qtdata")
 	if err != nil {
@@ -104,7 +104,7 @@ func TestListTasks_Ok(t *testing.T) {
 }
 
 func TestListTasks_UnknownList(t *testing.T) {
-	repo, _ := newTestRepo(t, seedData)
+	repo, _ := newTestRepo(t, sampleData)
 
 	if _, err := repo.ListTasks("no-such-list"); !errors.Is(err, ErrListNotFound) {
 		t.Errorf("期望 ErrListNotFound，实际 %v", err)
@@ -112,7 +112,7 @@ func TestListTasks_UnknownList(t *testing.T) {
 }
 
 func TestUpdateTask_UpdateExisting(t *testing.T) {
-	repo, _ := newTestRepo(t, seedData)
+	repo, _ := newTestRepo(t, sampleData)
 
 	updated := Task{
 		ID:          "qtdata-project-closeout",
@@ -148,7 +148,7 @@ func TestUpdateTask_UpdateExisting(t *testing.T) {
 }
 
 func TestUpdateTask_AppendNew(t *testing.T) {
-	repo, _ := newTestRepo(t, seedData)
+	repo, _ := newTestRepo(t, sampleData)
 
 	cat := "operation"
 	added := Task{
@@ -182,7 +182,7 @@ func TestUpdateTask_AppendNew(t *testing.T) {
 }
 
 func TestUpdateTask_UnknownList(t *testing.T) {
-	repo, _ := newTestRepo(t, seedData)
+	repo, _ := newTestRepo(t, sampleData)
 
 	err := repo.UpdateTask("no-such-list", Task{ID: "t", Title: "t"})
 	if !errors.Is(err, ErrListNotFound) {
