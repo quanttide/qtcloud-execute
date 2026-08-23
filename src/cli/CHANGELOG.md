@@ -2,6 +2,12 @@
 
 本文件仅记录 **cli（量潮执行云 CLI，Rust，纯服务端客户端）** 的版本变更。studio / provider 各自维护自己的 CHANGELOG。
 
+## [0.1.0-alpha.3] - 2026-08-23
+
+- ci(cli)：release-cli 对齐 qtcloud-devops 惯例——`check`（validate-version/validate-changelog 脚本）+ `build-binaries`（多平台矩阵）+ `publish-crate`（crates.io）；保留 GitHub Release 二进制发布（`attach-release`，按目标名区分）
+- ci(cli)：契约补齐 `stages`/`platform` 与 cli 的 `framework`/`registry`(crates)/`release.changelog`/`test_threshold`
+- 验证：`validate-version.sh`/`validate-changelog.sh` 本地通过（版本匹配/不匹配均正确）
+
 ## [0.1.0-alpha.2] - 2026-08-23
 
 - ci(cli)：`release-cli` 工作流增加 crates.io 发布（`cargo publish`，需 secret `CRATES_API_TOKEN`）
