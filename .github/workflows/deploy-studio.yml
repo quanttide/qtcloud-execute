@@ -16,9 +16,10 @@ jobs:
           flutter-version: '3.44.8'
 
       - run: cd src/studio && flutter pub get
-      # QTCLOUD_EXECUTE_API：provider API 基地址（FC HTTP 触发器 URL），
-      # 在仓库 Actions → Variables 配置（如 https://<fc-trigger>.fc.aliyuncs.com）
-      - run: cd src/studio && flutter build web --dart-define=APP_VERSION=${GITHUB_REF_NAME#studio/} --dart-define=QTCLOUD_EXECUTE_API=${{ vars.QTCLOUD_EXECUTE_API }}
+      # QTCLOUD_EXECUTE_API_BASE_URL：provider API 基地址（系统级 API 网关，经 api.quanttide.com 转发），
+      # 规范对齐 qtcloud-delib（QTCLOUD_DELIB_API_BASE_URL）；在仓库 Actions → Variables 配置，
+      # 如 https://api.quanttide.com/qtcloud-execute
+      - run: cd src/studio && flutter build web --dart-define=APP_VERSION=${GITHUB_REF_NAME#studio/} --dart-define=QTCLOUD_EXECUTE_API_BASE_URL=${{ vars.QTCLOUD_EXECUTE_API_BASE_URL }}
 
       - uses: manyuanrong/setup-ossutil@v3.0
         with:

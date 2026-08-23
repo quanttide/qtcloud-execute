@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
@@ -10,15 +11,29 @@ import 'states/board_cubit.dart';
 import 'states/task_list_cubit.dart';
 import 'theme.dart';
 
-/// API 基地址：`--dart-define=QTCLOUD_EXECUTE_API=<url>`（生产在部署时注入）；
-/// 缺省回退到本地开发地址。为空兜底也回退到本地开发地址。
-const String _apiBaseUrl = String.fromEnvironment('QTCLOUD_EXECUTE_API');
+/// API 基地址：`--dart-define=QTCLOUD_EXECUTE_API_BASE_URL=<url>`（生产在部署时注入）。
+///
+/// 规范对齐 qtcloud-delib（`QTCLOUD_DELIB_API_BASE_URL`）：生产指向系统级 API 网关
+/// `https://api.quanttide.com/qtcloud-execute`，由网关转发到 FC；应用层不做 CORS（网关负责）。
+const String _apiBaseUrlEnv = String.fromEnvironment('QTCLOUD_EXECUTE_API_BASE_URL');
+
+/// 默认 API 基地址：
+/// - `--dart-define=QTCLOUD_EXECUTE_API_BASE_URL` 显式指定（生产网关/真实设备）；
+/// - Android 模拟器经 `10.0.2.2` 访问宿主机；
+/// - 其余平台（桌面 / Web）默认 `localhost`。
+String _apiBaseUrl() {
+  if (_apiBaseUrlEnv.isNotEmpty) {
+    return _apiBaseUrlEnv;
+  }
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    return 'http://10.0.2.2:8080';
+  }
+  return 'http://localhost:8080';
+}
 
 /// 构建服务端 API 仓储（运行期默认数据源）。
 Future<TaskRepository> loadApiRepository() async =>
-    ApiTaskRepository(
-      baseUrl: _apiBaseUrl.isEmpty ? 'http://127.0.0.1:8080' : _apiBaseUrl,
-    );
+    ApiTaskRepository(baseUrl: _apiBaseUrl());
 
 void main() {
   usePathUrlStrategy();
