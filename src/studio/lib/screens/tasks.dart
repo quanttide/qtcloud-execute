@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../models/task.dart';
+import '../models/task_list.dart';
+import '../repositories/task_repository.dart';
 import '../widgets/task_sections.dart';
 
-/// 任务清单页：加载任务档案列表
+/// 任务清单页：加载全部清单任务（阶段 1 过渡展示，阶段 4 换二维看板）
 class TasksScreen extends StatefulWidget {
-  const TasksScreen({super.key, required this.loadTasks});
+  const TasksScreen({super.key, required this.loadRepository});
 
-  final Future<TaskList> Function() loadTasks;
+  final Future<TaskRepository> Function() loadRepository;
 
   @override
   State<TasksScreen> createState() => _TasksScreenState();
@@ -26,9 +28,17 @@ class _TasksScreenState extends State<TasksScreen> {
 
   Future<void> _loadTasks() async {
     try {
-      final TaskList list = await widget.loadTasks();
+      final TaskRepository repository = await widget.loadRepository();
+      final List<TaskList> lists = await repository.loadLists();
+      final List<Task> tasks = [];
+      for (final list in lists) {
+        final grouped = await repository.loadTasks(list.id);
+        for (final groupTasks in grouped.values) {
+          tasks.addAll(groupTasks);
+        }
+      }
       if (!mounted) return;
-      setState(() => _tasks = list.tasks);
+      setState(() => _tasks = tasks);
     } catch (e) {
       if (!mounted) return;
       setState(() => _error = e.toString());
@@ -53,29 +63,20 @@ class _TasksScreenState extends State<TasksScreen> {
     if (tasks.isEmpty) {
       return const EmptyState(message: '暂无任务');
     }
-    final Map<String, String> names = {
-      for (final task in tasks) task.id: task.name,
-    };
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: tasks.length,
-      itemBuilder: (BuildContext context, int index) {
-        final Task task = tasks[index];
-        return _TaskCard(
-          task: task,
-          dependsOnName: task.dependsOn == null ? null : names[task.dependsOn],
-        );
-      },
+      itemBuilder: (BuildContext context, int index) =>
+          _TaskCard(task: tasks[index]),
     );
   }
 }
 
-/// 任务卡片：概览任务名、依赖与目标，点击进入档案详情
+/// 任务卡片：标题 + 状态/优先级，点击进入详情
 class _TaskCard extends StatelessWidget {
-  const _TaskCard({required this.task, this.dependsOnName});
+  const _TaskCard({required this.task});
 
   final Task task;
-  final String? dependsOnName;
 
   @override
   Widget build(BuildContext context) {
@@ -94,34 +95,40 @@ class _TaskCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: Text(task.name, style: theme.textTheme.titleLarge),
+                    child: Text(task.title, style: theme.textTheme.titleLarge),
                   ),
-                  if (dependsOnName != null)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8),
-                      child: Tooltip(
-                        message: '依赖：$dependsOnName',
-                        child: const Chip(
-                          avatar: Icon(Icons.link, size: 16),
-                          label: Text('依赖前置任务'),
-                        ),
-                      ),
-                    ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 4),
-                    child: Icon(
-                      Icons.chevron_right,
-                      color: theme.colorScheme.outline,
-                    ),
+                  Icon(
+                    Icons.chevron_right,
+                    color: theme.colorScheme.outline,
                   ),
                 ],
               ),
               const SizedBox(height: 8),
               Text(
-                task.goal,
+                task.description,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: [
+                  Chip(
+                    avatar: Icon(
+                      Icons.circle,
+                      size: 12,
+                      color: _statusColor(theme, task.status),
+                    ),
+                    label: Text(task.status.label),
+                  ),
+                  Chip(
+                    avatar: const Icon(Icons.flag_outlined, size: 16),
+                    label: Text(task.priority.label),
+                  ),
+                ],
               ),
             ],
           ),
@@ -129,4 +136,11 @@ class _TaskCard extends StatelessWidget {
       ),
     );
   }
+
+  Color _statusColor(ThemeData theme, TaskStatus status) => switch (status) {
+    TaskStatus.notStarted => theme.colorScheme.outline,
+    TaskStatus.inProgress => theme.colorScheme.primary,
+    TaskStatus.reviewing => theme.colorScheme.tertiary,
+    TaskStatus.done => theme.colorScheme.secondary,
+  };
 }

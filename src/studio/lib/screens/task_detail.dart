@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../models/task.dart';
+import '../models/task_list.dart';
+import '../repositories/task_repository.dart';
 import '../widgets/task_archive.dart';
 import '../widgets/task_sections.dart';
 
@@ -9,11 +11,11 @@ class TaskDetailScreen extends StatefulWidget {
   const TaskDetailScreen({
     super.key,
     required this.taskId,
-    required this.loadTasks,
+    required this.loadRepository,
   });
 
   final String taskId;
-  final Future<TaskList> Function() loadTasks;
+  final Future<TaskRepository> Function() loadRepository;
 
   @override
   State<TaskDetailScreen> createState() => _TaskDetailScreenState();
@@ -21,7 +23,6 @@ class TaskDetailScreen extends StatefulWidget {
 
 class _TaskDetailScreenState extends State<TaskDetailScreen> {
   Task? _task;
-  String? _dependsOnName;
   String? _error;
 
   @override
@@ -32,28 +33,24 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
 
   Future<void> _loadTask() async {
     try {
-      final TaskList list = await widget.loadTasks();
+      final TaskRepository repository = await widget.loadRepository();
+      final List<TaskList> lists = await repository.loadLists();
       Task? task;
-      for (final t in list.tasks) {
-        if (t.id == widget.taskId) {
-          task = t;
-          break;
-        }
-      }
-      String? dependsOnName;
-      if (task?.dependsOn != null) {
-        for (final t in list.tasks) {
-          if (t.id == task!.dependsOn) {
-            dependsOnName = t.name;
-            break;
+      for (final list in lists) {
+        final grouped = await repository.loadTasks(list.id);
+        for (final groupTasks in grouped.values) {
+          for (final t in groupTasks) {
+            if (t.id == widget.taskId) {
+              task = t;
+              break;
+            }
           }
+          if (task != null) break;
         }
+        if (task != null) break;
       }
       if (!mounted) return;
-      setState(() {
-        _task = task;
-        _dependsOnName = dependsOnName;
-      });
+      setState(() => _task = task);
     } catch (e) {
       if (!mounted) return;
       setState(() => _error = e.toString());
@@ -79,19 +76,8 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text(task.name, style: theme.textTheme.titleLarge),
+        Text(task.title, style: theme.textTheme.titleLarge),
         const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            if (_dependsOnName != null)
-              Chip(
-                avatar: const Icon(Icons.link, size: 16),
-                label: Text('依赖：$_dependsOnName'),
-              ),
-          ],
-        ),
         TaskArchiveView(task: task),
       ],
     );
