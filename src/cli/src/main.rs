@@ -1,12 +1,21 @@
 use clap::{Parser, Subcommand};
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-/// 量潮执行云 CLI —— 命令行任务管理（对齐执行云领域模型）
+/// 量潮执行云 CLI —— 云端任务 API 的辅助入口（主要供 AI 使用）
+///
+/// 纯服务端客户端：只对接已部署 provider 的 HTTP 接口，不读写本地文件。
+/// 数据源地址：`--server <BASE_URL>` 或环境变量 `QTCLOUD_EXECUTE_SERVER`（二选一，必填）。
 #[derive(Parser)]
-#[command(name = "qtcloud-execute", version, about = "量潮执行云 CLI：命令行任务管理")]
+#[command(name = "qtcloud-execute", version, about = "量潮执行云 CLI：云端任务管理（AI 辅助入口）")]
 struct Cli {
+    /// 服务端 base URL（如 https://qtcloudute-prod-xxx.cn-hangzhou.fcapp.run）；未设时读环境变量 QTCLOUD_EXECUTE_SERVER
+    #[arg(long, global = true)]
+    server: Option<String>,
+    /// 以 JSON 输出（AI 友好，直接透传服务端响应）
+    #[arg(long, global = true)]
+    json: bool,
+
     #[command(subcommand)]
     command: Command,
 }
@@ -23,7 +32,7 @@ enum Command {
         #[arg(long)]
         status: Option<String>,
     },
-    /// 新增任务（status 默认 notStarted）
+    /// 新增任务（status 默认 notStarted；task ID 由 CLI 生成后 PUT）
     Add {
         /// 清单 ID
         list_id: String,
@@ -39,7 +48,7 @@ enum Command {
         #[arg(long)]
         category: Option<String>,
     },
-    /// 更新任务（按 task ID 定位，未提供的字段保持原值）
+    /// 更新任务（按 task ID 定位；未提供的字段保持原值，先 GET 合并再 PUT 全量）
     Update {
         /// 清单 ID
         list_id: String,
@@ -60,7 +69,7 @@ enum Command {
     },
 }
 
-// ─── 数据模型（对齐 tasks.json 结构） ───
+// ─── 数据模型（对齐 provider/internal/task） ───
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct Task {
@@ -81,54 +90,71 @@ struct List {
     tasks: Vec<Task>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct TaskList {
+/// GET /api/lists 的响应包装
+#[derive(Debug, Clone, Deserialize)]
+struct ListsResp {
     lists: Vec<List>,
+}
+
+/// GET /api/lists/{id}/tasks 的响应包装
+#[derive(Debug, Clone, Deserialize)]
+struct TasksResp {
+    tasks: Vec<Task>,
 }
 
 // 领域模型枚举取值（对齐 provider/internal/task）
 const STATUSES: [&str; 4] = ["notStarted", "inProgress", "reviewing", "done"];
 const PRIORITIES: [&str; 4] = ["urgent", "high", "medium", "low"];
 
-// ─── 数据文件访问 ───
-
-/// 数据文件路径：环境变量 QTCLOUD_EXECUTE_DATA，默认 data/tasks.json
-fn data_file() -> PathBuf {
-    match std::env::var("QTCLOUD_EXECUTE_DATA") {
-        Ok(p) if !p.is_empty() => PathBuf::from(p),
-        _ => PathBuf::from("data/tasks.json"),
-    }
+fn exit_err(e: &str) -> ! {
+    eprintln!("错误: {e}");
+    std::process::exit(1);
 }
 
-/// 读取数据文件；不存在时返回空结构（`{"lists": []}`）
-fn load(path: &PathBuf) -> Result<TaskList, String> {
-    match std::fs::read_to_string(path) {
-        Ok(raw) => serde_json::from_str(&raw)
-            .map_err(|e| format!("JSON 解析失败 {}: {e}", path.display())),
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-            Ok(TaskList { lists: Vec::new() })
-        }
-        Err(e) => Err(format!("无法读取 {}: {e}", path.display())),
-    }
-}
-
-/// 写回数据文件（2 空格缩进，与 tasks.json 格式一致；父目录不存在时自动创建）
-fn save(path: &PathBuf, tl: &TaskList) -> Result<(), String> {
-    if let Some(parent) = path.parent() {
-        if !parent.as_os_str().is_empty() {
-            std::fs::create_dir_all(parent)
-                .map_err(|e| format!("无法创建目录 {}: {e}", parent.display()))?;
+/// 解析服务端地址：--server 参数 > 环境变量 QTCLOUD_EXECUTE_SERVER > 报错
+fn resolve_base(cli_server: &Option<String>) -> String {
+    if let Some(s) = cli_server {
+        if !s.trim().is_empty() {
+            return s.trim_end_matches('/').to_string();
         }
     }
-    let mut data = serde_json::to_string_pretty(tl)
-        .map_err(|e| format!("序列化失败: {e}"))?;
-    data.push('\n');
-    std::fs::write(path, data).map_err(|e| format!("无法写入 {}: {e}", path.display()))
+    match std::env::var("QTCLOUD_EXECUTE_SERVER") {
+        Ok(s) if !s.trim().is_empty() => s.trim_end_matches('/').to_string(),
+        _ => exit_err("未指定服务端地址：用 --server <BASE_URL> 或环境变量 QTCLOUD_EXECUTE_SERVER"),
+    }
 }
 
-/// 按 ID 查找清单（返回索引）
-fn find_list(tl: &TaskList, list_id: &str) -> Option<usize> {
-    tl.lists.iter().position(|l| l.id == list_id)
+// ─── HTTP 访问 ───
+
+/// 发送 HTTP 请求并解析 JSON 响应（2xx 成功；否则返回错误）
+fn http_json(method: &str, url: &str, body: Option<&str>) -> Result<serde_json::Value, String> {
+    let resp = match method {
+        "GET" => ureq::get(url).call(),
+        "PUT" => ureq::put(url)
+            .set("Content-Type", "application/json")
+            .send_string(body.unwrap_or("")),
+        _ => return Err(format!("不支持的 HTTP 方法: {method}")),
+    };
+    let resp = resp.map_err(|e| match e {
+        ureq::Error::Status(code, r) => format!("HTTP {code}: {}", r.into_string().unwrap_or_default()),
+        other => format!("请求 {url} 失败: {other}"),
+    })?;
+    let code = resp.status();
+    let text = resp
+        .into_string()
+        .map_err(|e| format!("读取响应失败: {e}"))?;
+    if (200..300).contains(&code) {
+        serde_json::from_str(&text).map_err(|e| format!("JSON 解析失败: {e}"))
+    } else {
+        Err(format!("HTTP {code}: {text}"))
+    }
+}
+
+/// 拉取某清单全部任务（用于 id 去重 / update 合并）
+fn http_tasks(base: &str, list_id: &str) -> Result<Vec<Task>, String> {
+    let v = http_json("GET", &format!("{base}/api/lists/{list_id}/tasks"), None)?;
+    let r: TasksResp = serde_json::from_value(v).map_err(|e| format!("解析任务响应失败: {e}"))?;
+    Ok(r.tasks)
 }
 
 // ─── 枚举校验 ───
@@ -137,10 +163,7 @@ fn check_status(status: &str) -> Result<(), String> {
     if STATUSES.contains(&status) {
         Ok(())
     } else {
-        Err(format!(
-            "非法状态 `{status}`，可选：{}",
-            STATUSES.join("/")
-        ))
+        Err(format!("非法状态 `{status}`，可选：{}", STATUSES.join("/")))
     }
 }
 
@@ -148,76 +171,76 @@ fn check_priority(priority: &str) -> Result<(), String> {
     if PRIORITIES.contains(&priority) {
         Ok(())
     } else {
-        Err(format!(
-            "非法优先级 `{priority}`，可选：{}",
-            PRIORITIES.join("/")
-        ))
+        Err(format!("非法优先级 `{priority}`，可选：{}", PRIORITIES.join("/")))
+    }
+}
+
+fn ensure_update_fields(status: Option<&str>, priority: Option<&str>, description: Option<&str>, category: Option<&str>) {
+    if status.is_none() && priority.is_none() && description.is_none() && category.is_none() {
+        exit_err("至少提供一项要更新的字段（--status/--priority/--description/--category）");
+    }
+    if let Some(s) = status {
+        if let Err(e) = check_status(s) {
+            exit_err(&e);
+        }
+    }
+    if let Some(p) = priority {
+        if let Err(e) = check_priority(p) {
+            exit_err(&e);
+        }
     }
 }
 
 // ─── 子命令实现 ───
 
-/// lists：列出任务清单（数据文件不存在时初始化空结构）
-fn lists() {
-    let path = data_file();
-    if !path.is_file() {
-        save(&path, &TaskList { lists: Vec::new() }).unwrap_or_else(|e| {
-            eprintln!("错误: {e}");
-            std::process::exit(1);
-        });
-        println!("（暂无清单）已初始化数据文件: {}", path.display());
+/// lists：GET /api/lists
+fn lists(base: &str, json: bool) {
+    let v = http_json("GET", &format!("{base}/api/lists"), None).unwrap_or_else(|e| exit_err(&e));
+    if json {
+        println!("{}", serde_json::to_string(&v).unwrap());
         return;
     }
-    let tl = load(&path).unwrap_or_else(|e| {
-        eprintln!("错误: {e}");
-        std::process::exit(1);
-    });
-
-    if tl.lists.is_empty() {
-        println!("（暂无清单）数据文件: {}", path.display());
+    let r: ListsResp = serde_json::from_value(v).unwrap_or_else(|e| exit_err(&format!("解析清单失败: {e}")));
+    if r.lists.is_empty() {
+        println!("（暂无清单）服务器: {base}");
         return;
     }
-    println!("── 任务清单 ──  {}", path.display());
-    for l in &tl.lists {
+    println!("── 任务清单 ──  {base}");
+    for l in &r.lists {
         println!("  {:<12} {}  ({} 个任务)", l.id, l.name, l.tasks.len());
     }
 }
 
-/// tasks：列出某清单的任务
-fn tasks(list_id: &str, status_filter: Option<&str>) {
+/// tasks：GET /api/lists/{id}/tasks
+fn tasks(base: &str, list_id: &str, status_filter: Option<&str>, json: bool) {
     if let Some(s) = status_filter {
-        check_status(s).unwrap_or_else(|e| {
-            eprintln!("错误: {e}");
-            std::process::exit(1);
-        });
+        if let Err(e) = check_status(s) {
+            exit_err(&e);
+        }
     }
-    let path = data_file();
-    let tl = load(&path).unwrap_or_else(|e| {
-        eprintln!("错误: {e}");
-        std::process::exit(1);
-    });
-    let idx = find_list(&tl, list_id).unwrap_or_else(|| {
-        eprintln!("错误: 清单不存在: {list_id}");
-        std::process::exit(1);
-    });
-    let list = &tl.lists[idx];
-
-    println!("── {} ──  {}", list.name, list.id);
-    let tasks: Vec<&Task> = list
-        .tasks
+    let tasks = http_tasks(base, list_id).unwrap_or_else(|e| exit_err(&e));
+    if json {
+        let payload = if let Some(s) = status_filter {
+            let filtered: Vec<&Task> = tasks.iter().filter(|t| t.status == s).collect();
+            serde_json::json!({ "tasks": filtered })
+        } else {
+            serde_json::json!({ "tasks": tasks })
+        };
+        println!("{}", serde_json::to_string(&payload).unwrap());
+        return;
+    }
+    println!("── {list_id} ──  {base}/api/lists/{list_id}/tasks");
+    let filtered: Vec<&Task> = tasks
         .iter()
         .filter(|t| status_filter.map(|s| t.status == s).unwrap_or(true))
         .collect();
-    if tasks.is_empty() {
+    if filtered.is_empty() {
         println!("  （暂无任务）");
         return;
     }
-    for t in &tasks {
+    for t in &filtered {
         let cat = t.category.as_deref().unwrap_or("-");
-        println!(
-            "  {:<38} {:<11} {:<7} {}",
-            t.title, t.status, t.priority, cat
-        );
+        println!("  {:<38} {:<11} {:<7} {}", t.title, t.status, t.priority, cat);
         if let Some(d) = &t.description {
             println!("      {}  {d}", t.id);
         } else {
@@ -238,33 +261,25 @@ fn gen_task_id(list_id: &str, existing: &[String]) -> String {
             return id;
         }
     }
-    // 兜底（极端情况）
     format!("{list_id}-{}", base)
 }
 
-/// add：新增任务
-fn add(list_id: &str, title: &str, description: Option<&str>, priority: Option<&str>, category: Option<&str>) {
+/// add：生成 ID 后 PUT（upsert 追加）
+fn add(
+    base: &str,
+    list_id: &str,
+    title: &str,
+    description: Option<&str>,
+    priority: Option<&str>,
+    category: Option<&str>,
+    json: bool,
+) {
     let priority = priority.unwrap_or("medium");
-    check_priority(priority).unwrap_or_else(|e| {
-        eprintln!("错误: {e}");
-        std::process::exit(1);
-    });
-
-    let path = data_file();
-    let mut tl = load(&path).unwrap_or_else(|e| {
-        eprintln!("错误: {e}");
-        std::process::exit(1);
-    });
-    let idx = find_list(&tl, list_id).unwrap_or_else(|| {
-        eprintln!("错误: 清单不存在: {list_id}");
-        std::process::exit(1);
-    });
-
-    let existing_ids: Vec<String> = tl.lists[idx]
-        .tasks
-        .iter()
-        .map(|t| t.id.clone())
-        .collect();
+    if let Err(e) = check_priority(priority) {
+        exit_err(&e);
+    }
+    let existing = http_tasks(base, list_id).unwrap_or_else(|e| exit_err(&e));
+    let existing_ids: Vec<String> = existing.iter().map(|t| t.id.clone()).collect();
     let task_id = gen_task_id(list_id, &existing_ids);
     let task = Task {
         id: task_id.clone(),
@@ -274,112 +289,71 @@ fn add(list_id: &str, title: &str, description: Option<&str>, priority: Option<&
         priority: priority.to_string(),
         category: category.map(String::from),
     };
-    tl.lists[idx].tasks.push(task);
-    save(&path, &tl).unwrap_or_else(|e| {
-        eprintln!("错误: {e}");
-        std::process::exit(1);
-    });
-    println!("✓ 已新增任务 {task_id} → {title} (notStarted/{priority})");
+    let body = serde_json::to_string(&task).unwrap_or_else(|e| exit_err(&format!("序列化失败: {e}")));
+    let v = http_json("PUT", &format!("{base}/api/lists/{list_id}/tasks/{task_id}"), Some(&body))
+        .unwrap_or_else(|e| exit_err(&e));
+    if json {
+        println!("{}", serde_json::to_string(&v).unwrap());
+    } else {
+        println!("✓ 已新增任务 {task_id} → {title} (notStarted/{priority}) @ {base}");
+    }
 }
 
-/// update：更新任务
+/// update：先 GET 任务再合并字段，最后 PUT 全量替换
 fn update(
+    base: &str,
     list_id: &str,
     task_id: &str,
     status: Option<&str>,
     priority: Option<&str>,
     description: Option<&str>,
     category: Option<&str>,
+    json: bool,
 ) {
+    ensure_update_fields(status, priority, description, category);
+
+    let tasks = http_tasks(base, list_id).unwrap_or_else(|e| exit_err(&e));
+    let mut task = tasks
+        .into_iter()
+        .find(|t| t.id == task_id)
+        .unwrap_or_else(|| exit_err(&format!("任务不存在: {task_id}（清单 {list_id}）")));
+    let title = task.title.clone();
+
     if let Some(s) = status {
-        check_status(s).unwrap_or_else(|e| {
-            eprintln!("错误: {e}");
-            std::process::exit(1);
-        });
+        task.status = s.to_string();
     }
     if let Some(p) = priority {
-        check_priority(p).unwrap_or_else(|e| {
-            eprintln!("错误: {e}");
-            std::process::exit(1);
-        });
+        task.priority = p.to_string();
     }
-    if status.is_none() && priority.is_none() && description.is_none() && category.is_none() {
-        eprintln!("错误: 至少提供一项要更新的字段（--status/--priority/--description/--category）");
-        std::process::exit(1);
+    if let Some(d) = description {
+        task.description = Some(d.to_string());
+    }
+    if let Some(c) = category {
+        task.category = Some(c.to_string());
     }
 
-    let path = data_file();
-    let mut tl = load(&path).unwrap_or_else(|e| {
-        eprintln!("错误: {e}");
-        std::process::exit(1);
-    });
-    let idx = find_list(&tl, list_id).unwrap_or_else(|| {
-        eprintln!("错误: 清单不存在: {list_id}");
-        std::process::exit(1);
-    });
-    let title = {
-        let t = tl.lists[idx]
-            .tasks
-            .iter_mut()
-            .find(|t| t.id == task_id)
-            .unwrap_or_else(|| {
-                eprintln!("错误: 任务不存在: {task_id}（清单 {list_id}）");
-                std::process::exit(1);
-            });
-
-        if let Some(s) = status {
-            t.status = s.to_string();
-        }
-        if let Some(p) = priority {
-            t.priority = p.to_string();
-        }
-        if let Some(d) = description {
-            t.description = Some(d.to_string());
-        }
-        if let Some(c) = category {
-            t.category = Some(c.to_string());
-        }
-        t.title.clone()
-    };
-    save(&path, &tl).unwrap_or_else(|e| {
-        eprintln!("错误: {e}");
-        std::process::exit(1);
-    });
-    println!("✓ 已更新任务 {task_id}：{title}");
+    let body = serde_json::to_string(&task).unwrap_or_else(|e| exit_err(&format!("序列化失败: {e}")));
+    let v = http_json("PUT", &format!("{base}/api/lists/{list_id}/tasks/{task_id}"), Some(&body))
+        .unwrap_or_else(|e| exit_err(&e));
+    if json {
+        println!("{}", serde_json::to_string(&v).unwrap());
+    } else {
+        println!("✓ 已更新任务 {task_id}：{title} @ {base}");
+    }
 }
 
 fn main() {
     let cli = Cli::parse();
-    match cli.command {
-        Command::Lists => lists(),
-        Command::Tasks { list_id, status } => tasks(&list_id, status.as_deref()),
-        Command::Add {
-            list_id,
-            title,
-            description,
-            priority,
-            category,
-        } => add(
-            &list_id,
-            &title,
-            description.as_deref(),
-            priority.as_deref(),
-            category.as_deref(),
+    let base = resolve_base(&cli.server);
+
+    match &cli.command {
+        Command::Lists => lists(&base, cli.json),
+        Command::Tasks { list_id, status } => tasks(&base, list_id, status.as_deref(), cli.json),
+        Command::Add { list_id, title, description, priority, category } => add(
+            &base, list_id, title, description.as_deref(), priority.as_deref(), category.as_deref(), cli.json,
         ),
-        Command::Update {
-            list_id,
-            task_id,
-            status,
-            priority,
-            description,
-            category,
-        } => update(
-            &list_id,
-            &task_id,
-            status.as_deref(),
-            priority.as_deref(),
-            description.as_deref(),
-            category.as_deref(),
+        Command::Update { list_id, task_id, status, priority, description, category } => update(
+            &base, list_id, task_id, status.as_deref(), priority.as_deref(), description.as_deref(), category.as_deref(), cli.json,
         ),
     }
 }
