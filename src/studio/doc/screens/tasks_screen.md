@@ -38,7 +38,7 @@
 ### 任务列表
 
 - 每条任务：title + priority 色点 + status 徽标
-- 点击任务 → 跳转任务详情页（/tasks/:id）
+- **点击任务 → 弹窗打开详情**（TaskDetailDialog——就地操作，不跳页）
 - 排序：默认按 priority（紧急→高→中→低）组内排序
 
 ## 数据
