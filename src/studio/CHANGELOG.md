@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.1.0-beta.5] - 2026-09-03
+
+### Removed
+
+- 移除 `Task.category` 字段与类别过滤器（`CategoryFilterBar`）：任务不再分类，清单即隔离单元；新建/详情弹窗同步移除「类别」输入框（provider/cli/studio 三层同步移除）
+
 ## [0.1.0-beta.4] - 2026-08-23
 
 ### Added

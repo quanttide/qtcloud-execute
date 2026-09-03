@@ -2,6 +2,10 @@
 
 本文件仅记录 **provider（量潮任务执行服务端，Go + FC 3.0）** 的版本变更。studio / cli 各自维护自己的 CHANGELOG。
 
+## [0.1.0-alpha.3] - 2026-09-03
+
+- provider：移除 `Task.Category` 字段（`json:"category,omitempty"`）——API 不再接受/返回分类，存量数据文件中的 `category` 键反序列化时忽略、写回时清除
+
 ## [0.1.0-alpha.2] - 2026-08-23
 
 - fix(provider)：运行时任务数据 OSS 桶更名为 `qtcloud-execute-provider`（原 `qtcloud-execute-data`），并同步 FC 环境变量 `ALIYUN_OSS_BUCKET`

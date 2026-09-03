@@ -2,6 +2,10 @@
 
 本文件仅记录 **cli（量潮执行云 CLI，Rust，纯服务端客户端）** 的版本变更。studio / provider 各自维护自己的 CHANGELOG。
 
+## [0.1.0-alpha.4] - 2026-09-03
+
+- cli：移除 `--category` 参数（add/update）与 `Task.category` 字段，tasks 列表不再显示分类列（provider/studio 三层同步移除）
+
 ## [0.1.0-alpha.3] - 2026-08-23
 
 - ci(cli)：release-cli 对齐 qtcloud-devops 惯例——`check`（validate-version/validate-changelog 脚本）+ `build-binaries`（多平台矩阵）+ `publish-crate`（crates.io）；保留 GitHub Release 二进制发布（`attach-release`，按目标名区分）
