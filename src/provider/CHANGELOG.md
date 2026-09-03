@@ -4,13 +4,9 @@
 
 ## [0.1.0] - 2026-09-03
 
-- provider：v0.1.0 正式发布（自 `0.1.0-alpha.4` 转正，无代码变更），GA 版本与 alpha.4 构建一致
-
-## [0.1.0] - 2026-09-03
-
 ### 首个正式版
 
-自 alpha.1 以来的完整能力（0.1.0-alpha.4 为最后一个预发布版）：
+自 `0.1.0-alpha.4` 转正（GA 与 alpha.4 构建一致）。自 alpha.1 以来的完整能力：
 
 - 任务清单 API：`GET /api/lists`、`GET /api/lists/{id}/tasks`、`PUT upsert`、`DELETE` 任务
 - 数据源抽象（local / OSS）；FC 3.0 容器化部署 + Terraform IaC；数据文件 `data/tasks.json` 存 OSS
