@@ -82,7 +82,7 @@ class _TaskCreateDialogState extends State<TaskCreateDialog> {
       child: SizedBox(
         width: 440,
         height: double.infinity,
-        child: SingleChildScrollView(
+        child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,10 +133,14 @@ class _TaskCreateDialogState extends State<TaskCreateDialog> {
               _buildSection(
                 context,
                 title: '描述',
+                expand: true,
                 child: TextField(
                   key: const ValueKey('create-description-field'),
                   controller: _descriptionController,
-                  maxLines: 3,
+                  expands: true,
+                  maxLines: null,
+                  keyboardType: TextInputType.multiline,
+                  textAlignVertical: TextAlignVertical.top,
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     hintText: '补充任务描述…',
@@ -163,9 +167,11 @@ class _TaskCreateDialogState extends State<TaskCreateDialog> {
     BuildContext context, {
     required String title,
     required Widget child,
+    bool expand = false,
   }) {
     final theme = Theme.of(context);
-    return Column(
+    final section = Column(
+      mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
@@ -175,9 +181,10 @@ class _TaskCreateDialogState extends State<TaskCreateDialog> {
           ),
         ),
         const SizedBox(height: 6),
-        child,
+        expand ? Expanded(child: child) : child,
       ],
     );
+    return expand ? Expanded(child: section) : section;
   }
 
   /// 优先级按钮：当前档高亮（FilledButton），其余可选（OutlinedButton）。
