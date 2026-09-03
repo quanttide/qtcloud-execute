@@ -2,6 +2,10 @@
 
 本文件仅记录 **provider（量潮任务执行服务端，Go + FC 3.0）** 的版本变更。studio / cli 各自维护自己的 CHANGELOG。
 
+## [0.1.0] - 2026-09-03
+
+- provider：v0.1.0 正式发布（自 `0.1.0-alpha.4` 转正，无代码变更），GA 版本与 alpha.4 构建一致
+
 ## [0.1.0-alpha.4] - 2026-09-03
 
 - provider：新增 `DELETE /api/lists/{id}/tasks/{taskId}` 端点（`Repository.DeleteTask` + handler + 路由），清单/任务不存在返回 404
