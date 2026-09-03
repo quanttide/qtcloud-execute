@@ -54,15 +54,32 @@ class _TaskListScreenState extends State<TaskListScreen> {
     unawaited(context.read<BoardCubit>().loadTasks(id));
   }
 
+  /// 写操作包装：失败时 SnackBar 提示（写仓储失败不应静默）。
+  Future<void> _write(Future<void> action) async {
+    try {
+      await action;
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text('操作失败：$e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+    }
+  }
+
   /// 卡片点击 → 详情弹窗打开；操作回调写仓储并刷新看板（单向数据流）。
   Future<void> _openDetail(Task task) async {
     await TaskDetailDialog.show(
       context,
       task: task,
       onUpdated: (updated) =>
-          unawaited(context.read<BoardCubit>().updateTask(updated)),
+          unawaited(_write(context.read<BoardCubit>().updateTask(updated))),
       onDeleted: (taskId) =>
-          unawaited(context.read<BoardCubit>().deleteTask(taskId)),
+          unawaited(_write(context.read<BoardCubit>().deleteTask(taskId))),
     );
   }
 
@@ -72,7 +89,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
       context,
       status: status,
       onCreate: (draft) => unawaited(
-        context.read<BoardCubit>().createTask(draft, status: status),
+        _write(context.read<BoardCubit>().createTask(draft, status: status)),
       ),
     );
   }
@@ -81,7 +98,9 @@ class _TaskListScreenState extends State<TaskListScreen> {
   void _onDrop(Task task, TaskStatus targetStatus) {
     if (targetStatus == task.status) return;
     // moveTo 自由方向——允许前进也允许回退；同状态视为无操作
-    unawaited(context.read<BoardCubit>().updateTask(task.moveTo(targetStatus)));
+    unawaited(
+      _write(context.read<BoardCubit>().updateTask(task.moveTo(targetStatus))),
+    );
   }
 
   @override

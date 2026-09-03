@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:qtcloud_execute_studio/main.dart';
+import 'package:qtcloud_execute_studio/models/task.dart';
+import 'package:qtcloud_execute_studio/models/task_list.dart';
 import 'package:qtcloud_execute_studio/repositories/task_repository.dart';
 import 'package:qtcloud_execute_studio/widgets/task_create_dialog.dart';
 import 'package:qtcloud_execute_studio/widgets/task_detail_dialog.dart';
@@ -15,6 +17,30 @@ Future<TaskRepository> loadFixtureRepository() async {
   return InMemoryTaskRepository.fromJson(
     jsonDecode(raw) as Map<String, dynamic>,
   );
+}
+
+/// 写操作必失败的仓储包装（验证失败提示）
+class _FailingWriteRepository implements TaskRepository {
+  _FailingWriteRepository(this._inner);
+
+  final TaskRepository _inner;
+
+  @override
+  Future<List<TaskList>> loadLists() => _inner.loadLists();
+
+  @override
+  Future<List<Task>> loadTasks(String listId) => _inner.loadTasks(listId);
+
+  @override
+  Future<void> updateTask(String listId, Task task) =>
+      Future.error(StateError('模拟写入失败'));
+
+  @override
+  Future<void> deleteTask(String listId, String taskId) =>
+      Future.error(StateError('模拟删除失败'));
+
+  @override
+  Future<void> save() async {}
 }
 
 Future<void> pumpApp(WidgetTester tester) async {
@@ -198,5 +224,23 @@ void main() {
       ),
       findsOneWidget,
     );
+  });
+
+  testWidgets('写操作失败：SnackBar 提示（不静默）', (tester) async {
+    await tester.pumpWidget(
+      QuantTideExecuteStudioApp(
+        loadRepository: () async =>
+            _FailingWriteRepository(await loadFixtureRepository()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // 点击卡片 → 详情面板 → 状态变更触发写入（必失败）
+    await tester.tap(find.text('客户项目结项推进'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('status-reviewing')));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('操作失败'), findsOneWidget);
   });
 }
