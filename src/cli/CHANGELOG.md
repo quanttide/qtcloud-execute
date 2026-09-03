@@ -2,6 +2,10 @@
 
 本文件仅记录 **cli（量潮执行云 CLI，Rust，纯服务端客户端）** 的版本变更。studio / provider 各自维护自己的 CHANGELOG。
 
+## [0.1.0-alpha.5] - 2026-09-03
+
+- cli：`add` 新增 `--status` 参数（新建时直接指定状态，默认 notStarted）——不再需要 add 后再 update 两跳
+
 ## [0.1.0-alpha.4] - 2026-09-03
 
 - cli：移除 `--category` 参数（add/update）与 `Task.category` 字段，tasks 列表不再显示分类列（provider/studio 三层同步移除）
