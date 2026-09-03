@@ -69,6 +69,21 @@ func (h *Handler) UpdateTask(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"task": t})
 }
 
+// DeleteTask 处理 DELETE /api/lists/{id}/tasks/{taskId}
+func (h *Handler) DeleteTask(w http.ResponseWriter, r *http.Request) {
+	listID := r.PathValue("id")
+	taskID := r.PathValue("taskId")
+	if err := h.repo.DeleteTask(listID, taskID); err != nil {
+		if errors.Is(err, ErrListNotFound) || errors.Is(err, ErrTaskNotFound) {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+		http.Error(w, "任务删除失败："+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"deleted": taskID})
+}
+
 func writeJSON(w http.ResponseWriter, code int, v any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(code)

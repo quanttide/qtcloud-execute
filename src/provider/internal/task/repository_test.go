@@ -184,6 +184,45 @@ func TestUpdateTask_UnknownList(t *testing.T) {
 	}
 }
 
+func TestDeleteTask_Ok(t *testing.T) {
+	repo, _ := newTestRepo(t, sampleData)
+
+	if err := repo.DeleteTask("qtdata", "qtdata-project-closeout"); err != nil {
+		t.Fatalf("DeleteTask: %v", err)
+	}
+
+	tasks, err := repo.ListTasks("qtdata")
+	if err != nil {
+		t.Fatalf("ListTasks: %v", err)
+	}
+	if len(tasks) != 1 {
+		t.Fatalf("任务数 = %d, 期望 1（删除后）", len(tasks))
+	}
+	for _, tk := range tasks {
+		if tk.ID == "qtdata-project-closeout" {
+			t.Errorf("已删除任务仍存在：%+v", tk)
+		}
+	}
+}
+
+func TestDeleteTask_UnknownTask(t *testing.T) {
+	repo, _ := newTestRepo(t, sampleData)
+
+	err := repo.DeleteTask("qtdata", "no-such-task")
+	if !errors.Is(err, ErrTaskNotFound) {
+		t.Errorf("期望 ErrTaskNotFound，实际 %v", err)
+	}
+}
+
+func TestDeleteTask_UnknownList(t *testing.T) {
+	repo, _ := newTestRepo(t, sampleData)
+
+	err := repo.DeleteTask("no-such-list", "t")
+	if !errors.Is(err, ErrListNotFound) {
+		t.Errorf("期望 ErrListNotFound，实际 %v", err)
+	}
+}
+
 func TestListLists_Empty(t *testing.T) {
 	// 数据文件不存在 → 空集合，不报错（对齐模板空目录行为）
 	repo := NewRepository(store.NewLocalStore(t.TempDir()), "data/tasks.json")

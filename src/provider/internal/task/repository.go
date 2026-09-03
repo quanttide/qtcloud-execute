@@ -50,6 +50,9 @@ type TaskList struct {
 // ErrListNotFound 清单不存在
 var ErrListNotFound = errors.New("清单不存在")
 
+// ErrTaskNotFound 任务不存在
+var ErrTaskNotFound = errors.New("任务不存在")
+
 // Repository 任务清单数据访问
 type Repository struct {
 	st       store.Store
@@ -128,6 +131,27 @@ func (r *Repository) UpdateTask(listID string, task Task) error {
 		}
 		tl.Lists[i].Tasks = append(tl.Lists[i].Tasks, task)
 		return r.save(tl)
+	}
+	return ErrListNotFound
+}
+
+// DeleteTask 删除指定清单中的任务（清单或任务不存在返回对应错误）
+func (r *Repository) DeleteTask(listID, taskID string) error {
+	tl, err := r.load()
+	if err != nil {
+		return err
+	}
+	for i := range tl.Lists {
+		if tl.Lists[i].ID != listID {
+			continue
+		}
+		for j := range tl.Lists[i].Tasks {
+			if tl.Lists[i].Tasks[j].ID == taskID {
+				tl.Lists[i].Tasks = append(tl.Lists[i].Tasks[:j], tl.Lists[i].Tasks[j+1:]...)
+				return r.save(tl)
+			}
+		}
+		return ErrTaskNotFound
 	}
 	return ErrListNotFound
 }

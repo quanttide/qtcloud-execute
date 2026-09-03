@@ -45,6 +45,7 @@ func main() {
 	mux.HandleFunc("GET /api/lists", h.ListLists)
 	mux.HandleFunc("GET /api/lists/{id}/tasks", h.ListTasks)
 	mux.HandleFunc("PUT /api/lists/{id}/tasks/{taskId}", h.UpdateTask)
+	mux.HandleFunc("DELETE /api/lists/{id}/tasks/{taskId}", h.DeleteTask)
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(`{"status":"ok"}`))

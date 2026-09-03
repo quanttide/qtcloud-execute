@@ -2,6 +2,10 @@
 
 本文件仅记录 **provider（量潮任务执行服务端，Go + FC 3.0）** 的版本变更。studio / cli 各自维护自己的 CHANGELOG。
 
+## [0.1.0-alpha.4] - 2026-09-03
+
+- provider：新增 `DELETE /api/lists/{id}/tasks/{taskId}` 端点（`Repository.DeleteTask` + handler + 路由），清单/任务不存在返回 404
+
 ## [0.1.0-alpha.3] - 2026-09-03
 
 - provider：移除 `Task.Category` 字段（`json:"category,omitempty"`）——API 不再接受/返回分类，存量数据文件中的 `category` 键反序列化时忽略、写回时清除
