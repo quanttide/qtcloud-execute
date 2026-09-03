@@ -32,37 +32,27 @@ qtcloud-execute lists
 
 本地联调时把地址指向本地 provider（如 `--server http://localhost:8080`）即可。
 
-## 任务与清单
+## 清单
 
-清单（list）按业务隔离任务，量潮科技目前有 `qtdata`（量潮数据）、`qtclass`（量潮课堂）、`qtcloud`（量潮云）三个清单。任务（task）归属于某个清单，字段为标题、描述、优先级、状态，ID 在清单内唯一。
+清单用来隔离不同类别的事情。量潮科技有量潮数据、量潮课堂、量潮云三个主营业务，对应 `qtdata`、`qtclass`、`qtcloud` 三个清单。
 
-状态与优先级的取值：
+## 任务
 
-- 状态：`notStarted` 未开始、`inProgress` 执行中、`reviewing` 评审中、`done` 已完成
-- 优先级：`urgent` 紧急、`high` 高、`medium` 中、`low` 低
+任务属于某个清单，用标题、描述、优先级、状态四个部分描述：
 
-## 命令一览
+- 标题：用动名词写，比如「升级量潮执行云客户端」。
+- 描述：说明要做什么、怎么验收。
+- 优先级：决定先处理哪件——紧急、高、中、低，默认中。
+- 状态：说明推进到哪一步——未开始、执行中、评审中、已完成，默认未开始。
 
-- `lists`——列出全部任务清单及各自任务数
-- `tasks <清单ID>`——列出某清单的任务，可按 `--status` 过滤
-- `add <清单ID> <标题>`——新增任务
-- `update <清单ID> <任务ID>`——更新任务的状态/优先级/描述
-- `delete <清单ID> <任务ID>`——删除任务，不可撤销
+命令行里优先级写作 `urgent` / `high` / `medium` / `low`，状态写作 `notStarted` / `inProgress` / `reviewing` / `done`。
 
-每个命令的完整签名、参数默认值、JSON 输出与退出行为见 [CLI 参考](../api-references/cli.md)。
+新增任务（`add`）时四个部分都能设置；已建任务只能改描述、优先级、状态（`update`），**标题不支持修改**——要改标题只能删除后重建。
 
-## 常用流程
+## 常用操作
 
-```bash
-# 看板概览
-qtcloud-execute lists
-
-# 新增一个高优先级任务
-qtcloud-execute add qtcloud '升级量潮执行云客户端' --priority high
-
-# 推进任务状态（执行中 → 评审中）
-qtcloud-execute update qtcloud <任务ID> --status reviewing
-
-# 查看评审中的任务
-qtcloud-execute tasks qtcloud --status reviewing
-```
+- 看有哪些清单、各有多少任务：`qtcloud-execute lists`
+- 看某清单的任务，只看某个状态：`qtcloud-execute tasks qtcloud --status inProgress`
+- 有新事就记下来：`qtcloud-execute add qtcloud '升级量潮执行云客户端' --priority high`
+- 做完一件就推进：`qtcloud-execute update qtcloud <任务ID> --status reviewing`
+- 不要了的删掉：`qtcloud-execute delete qtcloud <任务ID>`（不可撤销）
