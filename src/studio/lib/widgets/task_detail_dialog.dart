@@ -42,7 +42,6 @@ class _TaskDetailDialogState extends State<TaskDetailDialog> {
   late Task _draft;
 
   late final TextEditingController _descriptionController;
-  late final TextEditingController _categoryController;
 
   @override
   void initState() {
@@ -51,13 +50,11 @@ class _TaskDetailDialogState extends State<TaskDetailDialog> {
     _descriptionController = TextEditingController(
       text: widget.task.description,
     );
-    _categoryController = TextEditingController(text: widget.task.category);
   }
 
   @override
   void dispose() {
     _descriptionController.dispose();
-    _categoryController.dispose();
     super.dispose();
   }
 
@@ -80,16 +77,9 @@ class _TaskDetailDialogState extends State<TaskDetailDialog> {
     _apply(_draft.copyWith(priority: priority));
   }
 
-  /// 保存描述 + 分类：trim 后提交（分类为空置 null——业务自定义，可选）。
+  /// 保存描述：trim 后提交。
   void _save() {
-    _apply(
-      _draft.copyWith(
-        description: _descriptionController.text,
-        category: _categoryController.text.trim().isEmpty
-            ? null
-            : _categoryController.text.trim(),
-      ),
-    );
+    _apply(_draft.copyWith(description: _descriptionController.text));
     Navigator.of(context).pop();
   }
 
@@ -145,19 +135,6 @@ class _TaskDetailDialogState extends State<TaskDetailDialog> {
                     for (final priority in TaskPriority.values)
                       _buildPriorityButton(priority),
                   ],
-                ),
-              ),
-              const SizedBox(height: 12),
-              _buildSection(
-                context,
-                title: '类别',
-                child: TextField(
-                  key: const ValueKey('category-field'),
-                  controller: _categoryController,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    hintText: '业务自定义类别（可选，如 business / product / operation）…',
-                  ),
                 ),
               ),
               const SizedBox(height: 12),

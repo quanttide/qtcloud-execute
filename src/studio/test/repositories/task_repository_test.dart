@@ -30,7 +30,7 @@ void main() {
       expect(lists.firstWhere((l) => l.id == 'qtcloud').tasks, hasLength(4));
     });
 
-    test('loadTasks 返回清单任务平铺列表（含 category）', () async {
+    test('loadTasks 返回清单任务平铺列表', () async {
       final List<Task> tasks = await repository.loadTasks('qtdata');
       expect(tasks, hasLength(4));
       expect(tasks.map((t) => t.id), [
@@ -39,8 +39,6 @@ void main() {
         'qtdata-reproduction',
         'qtdata-product-research',
       ]);
-      // category 用原分组名（business/product——业务自定义分类）
-      expect(tasks.map((t) => t.category).toSet(), {'business', 'product'});
     });
 
     test('updateTask 替换同 id 任务', () async {
@@ -50,7 +48,6 @@ void main() {
         description: '数据清洗完成，进入交付。',
         status: TaskStatus.inProgress,
         priority: TaskPriority.high,
-        category: 'product',
       );
       await repository.updateTask('qtdata', updated);
 
@@ -69,7 +66,6 @@ void main() {
         description: '新增描述',
         status: TaskStatus.notStarted,
         priority: TaskPriority.low,
-        category: 'operation',
       );
       await repository.updateTask('qtclass', created);
 

@@ -24,10 +24,8 @@ void main() {
 
     tearDown(() => cubit.close());
 
-    test('初始状态：空投影、无分类、无过滤', () {
+    test('初始状态：空投影', () {
       expect(cubit.state.tasks.columns, isEmpty);
-      expect(cubit.state.categories, isEmpty);
-      expect(cubit.state.selectedCategory, isNull);
     });
 
     test('loadTasks 投影为状态列泳道（四列固定，任务按状态归列）', () async {
@@ -47,16 +45,6 @@ void main() {
       );
       expect(projection.tasksOf(TaskStatus.notStarted), isEmpty);
       expect(projection.tasksOf(TaskStatus.done), isEmpty);
-    });
-
-    test('loadTasks 提取当前项目分类集合（去重保序）', () async {
-      await cubit.loadTasks('qtdata');
-      // qtdata 任务 category：business/product
-      expect(cubit.state.categories, ['business', 'product']);
-
-      await cubit.loadTasks('qtclass');
-      // qtclass 任务 category：operation/product
-      expect(cubit.state.categories, ['operation', 'product']);
     });
 
     test('清单切换：loadTasks 新清单，看板投影跟随', () async {
@@ -80,50 +68,6 @@ void main() {
       );
       // qtclass 无已完成任务
       expect(projection.tasksOf(TaskStatus.done), isEmpty);
-    });
-
-    test('setCategory 过滤：只显示该分类任务（列投影收窄）', () async {
-      await cubit.loadTasks('qtdata');
-
-      cubit.setCategory('business');
-
-      expect(cubit.state.selectedCategory, 'business');
-      // business 分类任务：closeout（inProgress）+ review（reviewing）
-      final BoardProjection projection = cubit.state.tasks;
-      expect(
-        projection.tasksOf(TaskStatus.inProgress).map((t) => t.id),
-        ['qtdata-project-closeout'],
-      );
-      expect(
-        projection.tasksOf(TaskStatus.reviewing).map((t) => t.id),
-        ['qtdata-project-review'],
-      );
-      // 非 business（product）任务被过滤
-      expect(
-        projection.tasksOf(TaskStatus.inProgress),
-        isNot(contains('qtdata-reproduction')),
-      );
-    });
-
-    test('setCategory 切回全部（null）恢复完整投影', () async {
-      await cubit.loadTasks('qtdata');
-      cubit.setCategory('business');
-      expect(
-        cubit.state.tasks.tasksOf(TaskStatus.inProgress),
-        hasLength(1),
-      );
-
-      cubit.setCategory(null);
-
-      expect(cubit.state.selectedCategory, isNull);
-      expect(
-        cubit.state.tasks.tasksOf(TaskStatus.inProgress),
-        hasLength(2),
-      );
-    });
-
-    test('setCategory 未加载项目抛 StateError', () {
-      expect(() => cubit.setCategory('business'), throwsStateError);
     });
 
     test('updateTask 状态变更后重投影：任务跨列（自由来回）', () async {
@@ -176,7 +120,7 @@ void main() {
       );
     });
 
-    test('updateTask 修改描述/优先级/category 后重投影保留更新', () async {
+    test('updateTask 修改描述/优先级后重投影保留更新', () async {
       await cubit.loadTasks('qtdata');
 
       final Task base = cubit.state.tasks
@@ -185,7 +129,6 @@ void main() {
       final Task updated = base.copyWith(
         description: '数据清洗完成，进入交付。',
         priority: TaskPriority.urgent,
-        category: '数据产品',
       );
 
       await cubit.updateTask(updated);
@@ -195,7 +138,6 @@ void main() {
           .firstWhere((t) => t.id == 'qtdata-reproduction');
       expect(projected.description, '数据清洗完成，进入交付。');
       expect(projected.priority, TaskPriority.urgent);
-      expect(projected.category, '数据产品');
     });
 
     test('updateTask 更新后的任务可被再次加载并投影', () async {
@@ -226,7 +168,6 @@ void main() {
         description: '',
         status: TaskStatus.notStarted,
         priority: TaskPriority.low,
-        category: 'business',
       );
 
       await cubit.updateTask(created);
@@ -248,18 +189,13 @@ void main() {
         title: '新建任务',
         description: '',
         priority: TaskPriority.high,
-        category: 'business',
       );
       await cubit.createTask(draft, status: TaskStatus.notStarted);
 
-      // 投影含新任务（notStarted 列，category=business）
+      // 投影含新任务（notStarted 列）
       expect(
         cubit.state.tasks.tasksOf(TaskStatus.notStarted).map((t) => t.id),
         hasLength(1),
-      );
-      expect(
-        cubit.state.tasks.tasksOf(TaskStatus.notStarted).single.category,
-        'business',
       );
       // 仓储持久化：总数 +1
       final List<Task> stored = await repository.loadTasks('qtdata');

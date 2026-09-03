@@ -7,7 +7,7 @@ import '../models/task_list.dart';
 /// 每个项目一个垂直导航项：项目名 + 任务数；当前项目高亮
 /// （背景色 + 左侧指示条）。点击回调 [onSwitch]；底部「新增项目」入口。
 ///
-/// 定位为"项目隔离单元"切换——与分类过滤器（CategoryFilterBar）彻底分离。
+/// 定位为"项目隔离单元"切换——与看板泳道（状态列）彻底分离。
 class TaskListSwitcher extends StatelessWidget {
   const TaskListSwitcher({
     super.key,

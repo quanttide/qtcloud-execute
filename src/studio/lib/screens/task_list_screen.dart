@@ -7,7 +7,6 @@ import '../models/task.dart';
 import '../states/board_cubit.dart';
 import '../states/task_list_cubit.dart';
 import '../widgets/board_view.dart';
-import '../widgets/category_filter_bar.dart';
 import '../widgets/task_create_dialog.dart';
 import '../widgets/task_detail_dialog.dart';
 import '../widgets/task_list_switcher.dart';
@@ -16,13 +15,11 @@ import '../widgets/task_list_switcher.dart';
 ///
 /// 一次一个项目（TaskList/清单）为隔离单元：
 /// - 顶部项目切换器（TaskListCubit）——项目即隔离单元，切换看板跟随
-/// - 分类过滤器（CategoryFilterBar）——按 Task.category 过滤看板
 /// - 状态泳道看板（BoardCubit）——真看板，任务卡在不同状态列间自由来回
 /// - 列头「+」新建任务到目标列（TaskCreateDialog）
 ///
 /// 数据流（单向，Cubit 由 main.dart 的 MultiBlocProvider 注入）：
 /// - 项目切换 → BoardCubit.loadTasks
-/// - 分类选择 → BoardCubit.setCategory
 /// - 卡片点击 → TaskDetailDialog → onUpdated → BoardCubit.updateTask
 /// - 卡片拖拽跨列 → BoardCubit.updateTask（moveTo 自由方向）
 /// - 列头「+」 → TaskCreateDialog → BoardCubit.createTask
@@ -111,32 +108,16 @@ class _TaskListScreenState extends State<TaskListScreen> {
                 ),
               ),
             ),
-            // 右侧：分类过滤器 + 状态泳道看板（真看板）
+            // 右侧：状态泳道看板（真看板）
             Expanded(
-              child: Column(
-                children: [
-                  // 分类过滤器（独立、美化——按 Task.category 看分组）
-                  BlocBuilder<BoardCubit, BoardState>(
-                    builder: (context, state) => CategoryFilterBar(
-                      categories: state.categories,
-                      selectedCategory: state.selectedCategory,
-                      onSelect: (category) =>
-                          context.read<BoardCubit>().setCategory(category),
-                    ),
-                  ),
-                  // 状态泳道看板（真看板——项目全量任务 + 分类过滤）
-                  Expanded(
-                    child: BlocBuilder<BoardCubit, BoardState>(
-                      builder: (context, state) => BoardView(
-                        projection: state.tasks,
-                        wipLimits: _wipLimits,
-                        onTaskTap: _openDetail,
-                        onTaskDrop: _onDrop,
-                        onCreateTask: _openCreate,
-                      ),
-                    ),
-                  ),
-                ],
+              child: BlocBuilder<BoardCubit, BoardState>(
+                builder: (context, state) => BoardView(
+                  projection: state.tasks,
+                  wipLimits: _wipLimits,
+                  onTaskTap: _openDetail,
+                  onTaskDrop: _onDrop,
+                  onCreateTask: _openCreate,
+                ),
               ),
             ),
           ],

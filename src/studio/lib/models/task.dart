@@ -60,9 +60,6 @@ enum TaskPriority {
   );
 }
 
-/// copyWith 哨兵：区分"未提供"与"显式置 null"（category 可清空）。
-const _unset = Object();
-
 /// 执行云的最小领域单元——一个事项
 class Task {
   const Task({
@@ -71,7 +68,6 @@ class Task {
     required this.description,
     required this.status,
     required this.priority,
-    this.category,
   });
 
   /// 从 JSON 解析；status/priority 为 wire 值
@@ -81,7 +77,6 @@ class Task {
     description: json['description'] as String,
     status: TaskStatus.fromWire(json['status'] as String),
     priority: TaskPriority.fromWire(json['priority'] as String),
-    category: json['category'] as String?,
   );
 
   /// 唯一标识
@@ -99,9 +94,6 @@ class Task {
   /// 优先级
   final TaskPriority priority;
 
-  /// 业务自定义分类（自由字符串，不枚举约束；可选）
-  final String? category;
-
   /// JSON 序列化（全字段）
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -109,7 +101,6 @@ class Task {
     'description': description,
     'status': status.wire,
     'priority': priority.wire,
-    'category': category,
   };
 
   Task copyWith({
@@ -117,14 +108,12 @@ class Task {
     String? description,
     TaskStatus? status,
     TaskPriority? priority,
-    Object? category = _unset,
   }) => Task(
     id: id,
     title: title ?? this.title,
     description: description ?? this.description,
     status: status ?? this.status,
     priority: priority ?? this.priority,
-    category: identical(category, _unset) ? this.category : category as String?,
   );
 
   /// 状态流转：移动到 [target]（任意方向，可前进也可回退）。

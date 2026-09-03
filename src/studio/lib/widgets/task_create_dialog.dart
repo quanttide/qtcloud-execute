@@ -5,7 +5,7 @@ import '../states/board_cubit.dart';
 
 /// 新建任务弹窗（列头「+」触发）——目标状态列由调用方指定。
 ///
-/// 纯组件：不持有 Cubit/仓储。标题/分类/优先级/描述表单，
+/// 纯组件：不持有 Cubit/仓储。标题/优先级/描述表单，
 /// 提交后通过 [onCreate] 回调交付 [TaskDraft]（id/status 由 Cubit 生成/指定）。
 class TaskCreateDialog extends StatefulWidget {
   const TaskCreateDialog({
@@ -40,7 +40,6 @@ class TaskCreateDialog extends StatefulWidget {
 class _TaskCreateDialogState extends State<TaskCreateDialog> {
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
-  late final TextEditingController _categoryController;
   TaskPriority _priority = TaskPriority.medium;
 
   @override
@@ -48,14 +47,12 @@ class _TaskCreateDialogState extends State<TaskCreateDialog> {
     super.initState();
     _titleController = TextEditingController();
     _descriptionController = TextEditingController();
-    _categoryController = TextEditingController();
   }
 
   @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
-    _categoryController.dispose();
     super.dispose();
   }
 
@@ -68,9 +65,6 @@ class _TaskCreateDialogState extends State<TaskCreateDialog> {
         title: title,
         description: _descriptionController.text,
         priority: _priority,
-        category: _categoryController.text.trim().isEmpty
-            ? null
-            : _categoryController.text.trim(),
       ),
     );
     Navigator.of(context).pop();
@@ -129,19 +123,6 @@ class _TaskCreateDialogState extends State<TaskCreateDialog> {
                     for (final priority in TaskPriority.values)
                       _buildPriorityButton(priority),
                   ],
-                ),
-              ),
-              const SizedBox(height: 12),
-              _buildSection(
-                context,
-                title: '类别',
-                child: TextField(
-                  key: const ValueKey('create-category-field'),
-                  controller: _categoryController,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    hintText: '业务自定义分类（可选，如 business / product）…',
-                  ),
                 ),
               ),
               const SizedBox(height: 12),

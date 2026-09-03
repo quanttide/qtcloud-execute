@@ -29,7 +29,7 @@ Finder columnCard(String statusWire, String taskId) => find.descendant(
 );
 
 void main() {
-  testWidgets('首页渲染：项目切换器 + 分类过滤器 + 状态泳道看板（默认 qtdata）',
+  testWidgets('首页渲染：项目切换器 + 状态泳道看板（默认 qtdata）',
       (tester) async {
     await pumpApp(tester);
 
@@ -38,10 +38,6 @@ void main() {
     expect(find.text('量潮课堂'), findsOneWidget);
     expect(find.text('量潮云'), findsOneWidget);
     expect(find.byKey(const ValueKey('list-qtdata')), findsOneWidget);
-    // 分类过滤器：「全部」+ 当前项目分类（qtdata: business/product）
-    expect(find.byKey(const ValueKey('category-all')), findsOneWidget);
-    expect(find.text('business'), findsOneWidget);
-    expect(find.text('product'), findsOneWidget);
 
     // 看板：四列 = 四状态（未开始/进行中/评审中/已完成）
     for (final label in ['未开始', '进行中', '评审中', '已完成']) {
@@ -79,35 +75,13 @@ void main() {
     expect(find.text('实训基地招聘运营'), findsOneWidget);
   });
 
-  testWidgets('分类过滤：选 business 只显示该分类任务，切回全部恢复', (tester) async {
-    await pumpApp(tester);
-
-    // 默认全部：qtdata 有 4 个任务
-    expect(find.text('客户项目结项推进'), findsOneWidget); // business
-    expect(find.text('客户项目复现'), findsOneWidget); // product
-
-    // 选 business：只显示 business 任务
-    await tester.tap(find.text('business'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('客户项目结项推进'), findsOneWidget);
-    expect(find.text('客户项目复盘'), findsOneWidget); // business
-    expect(find.text('客户项目复现'), findsNothing); // product 被过滤
-    expect(find.text('数据产品调研'), findsNothing); // product 被过滤
-
-    // 切回全部
-    await tester.tap(find.byKey(const ValueKey('category-all')));
-    await tester.pumpAndSettle();
-    expect(find.text('客户项目复现'), findsOneWidget);
-  });
-
   testWidgets('点击卡片打开详情弹窗（就地操作，不跳页）', (tester) async {
     await pumpApp(tester);
 
     await tester.tap(find.text('客户项目结项推进'));
     await tester.pumpAndSettle();
 
-    // 弹窗内五字段（限定在弹窗内——顶部过滤器同有"类别"文本）
+    // 弹窗内四字段（限定在弹窗内）
     expect(find.byType(TaskDetailDialog), findsOneWidget);
     expect(
       find.descendant(
@@ -116,7 +90,7 @@ void main() {
       ),
       findsOneWidget,
     );
-    for (final label in ['状态', '优先级', '类别', '描述']) {
+    for (final label in ['状态', '优先级', '描述']) {
       expect(
         find.descendant(
           of: find.byType(TaskDetailDialog),
@@ -126,7 +100,7 @@ void main() {
       );
     }
 
-    // 初始状态 inProgress（FilledButton 高亮）、优先级高、描述带初始值、分类带原分组名
+    // 初始状态 inProgress（FilledButton 高亮）、优先级高、描述带初始值
     expect(
       find.descendant(
         of: find.byType(TaskDetailDialog),
@@ -139,10 +113,6 @@ void main() {
       find.byKey(const ValueKey('description-field')),
     );
     expect(field.controller!.text, '结项收尾沟通，落实结项各项事宜');
-    final categoryField = tester.widget<TextField>(
-      find.byKey(const ValueKey('category-field')),
-    );
-    expect(categoryField.controller!.text, 'business');
 
     // 关闭弹窗返回看板
     await tester.tap(find.byIcon(Icons.close));
@@ -222,14 +192,10 @@ void main() {
 
     expect(find.byType(TaskCreateDialog), findsOneWidget);
 
-    // 填写标题 + 分类 + 创建
+    // 填写标题 + 创建
     await tester.enterText(
       find.byKey(const ValueKey('create-title-field')),
       '新建的未开始任务',
-    );
-    await tester.enterText(
-      find.byKey(const ValueKey('create-category-field')),
-      'business',
     );
     await tester.tap(find.byKey(const ValueKey('create-submit')));
     await tester.pumpAndSettle();

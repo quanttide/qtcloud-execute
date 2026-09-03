@@ -16,7 +16,6 @@ void main() {
             description: '结项收尾沟通',
             status: TaskStatus.inProgress,
             priority: TaskPriority.high,
-            category: 'business',
           ),
           Task(
             id: 't-2',
@@ -39,7 +38,6 @@ void main() {
             'description': '结项收尾沟通',
             'status': 'inProgress',
             'priority': 'high',
-            'category': 'business',
           },
           {
             'id': 't-2',
@@ -47,7 +45,6 @@ void main() {
             'description': '',
             'status': 'reviewing',
             'priority': 'medium',
-            'category': null,
           },
         ],
       });
@@ -57,8 +54,6 @@ void main() {
       expect(restored.name, list.name);
       expect(restored.tasks, hasLength(2));
       expect(restored.tasks.map((t) => t.id), ['t-1', 't-2']);
-      expect(restored.tasks.first.category, 'business');
-      expect(restored.tasks.last.category, isNull);
     });
 
     test('任务直接属于清单（无分组层级）', () {

@@ -2,8 +2,7 @@ import 'task.dart';
 
 /// 业务清单（实体）——一个业务一个清单
 ///
-/// 任务直接属于清单（无分组层级）；业务自定义分类走 [Task.category] 字段，
-/// 不枚举约束。
+/// 任务直接属于清单（无分组层级）。
 class TaskList {
   const TaskList({
     required this.id,
