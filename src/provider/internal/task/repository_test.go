@@ -21,16 +21,14 @@ const sampleData = `{
           "title": "客户项目结项推进",
           "description": "结项收尾沟通，落实结项各项事宜",
           "status": "inProgress",
-          "priority": "high",
-          "category": "business"
+          "priority": "high"
         },
         {
           "id": "qtdata-reproduction",
           "title": "客户项目复现",
           "description": "数据契约/蓝图/spec 已完成，数据清洗中",
           "status": "inProgress",
-          "priority": "high",
-          "category": "product"
+          "priority": "high"
         }
       ]
     },
@@ -43,8 +41,7 @@ const sampleData = `{
           "title": "工具库实验室重构",
           "description": "quanttide-platform 分解，quanttide 0.2.0 发布 PyPI",
           "status": "done",
-          "priority": "medium",
-          "category": "product"
+          "priority": "medium"
         }
       ]
     }
@@ -81,10 +78,9 @@ func TestListLists_Load(t *testing.T) {
 	if len(lists[0].Tasks) != 2 {
 		t.Errorf("qtdata 任务数 = %d, 期望 2", len(lists[0].Tasks))
 	}
-	// category 解析（可空字段，样例中非空）
 	t0 := lists[0].Tasks[0]
-	if t0.Category == nil || *t0.Category != "business" {
-		t.Errorf("category = %v, 期望 business", t0.Category)
+	if t0.Title != "客户项目结项推进" {
+		t.Errorf("任务[0] = %+v, 期望 客户项目结项推进", t0)
 	}
 }
 
@@ -150,14 +146,12 @@ func TestUpdateTask_UpdateExisting(t *testing.T) {
 func TestUpdateTask_AppendNew(t *testing.T) {
 	repo, _ := newTestRepo(t, sampleData)
 
-	cat := "operation"
 	added := Task{
 		ID:          "qtdata-new-task",
 		Title:       "新任务",
 		Description: "upsert 追加",
 		Status:      StatusNotStarted,
 		Priority:    PriorityLow,
-		Category:    &cat,
 	}
 	if err := repo.UpdateTask("qtdata", added); err != nil {
 		t.Fatalf("UpdateTask: %v", err)
@@ -172,7 +166,7 @@ func TestUpdateTask_AppendNew(t *testing.T) {
 	}
 	found := false
 	for _, tk := range tasks {
-		if tk.ID == added.ID && *tk.Category == "operation" {
+		if tk.ID == added.ID {
 			found = true
 		}
 	}

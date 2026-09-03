@@ -28,12 +28,11 @@ const (
 
 // Task 任务
 type Task struct {
-	ID          string  `json:"id"`
-	Title       string  `json:"title"`
-	Description string  `json:"description"`
-	Status      string  `json:"status"`
-	Priority    string  `json:"priority"`
-	Category    *string `json:"category,omitempty"`
+	ID          string `json:"id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Status      string `json:"status"`
+	Priority    string `json:"priority"`
 }
 
 // List 任务清单
