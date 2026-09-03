@@ -65,6 +65,13 @@ enum Command {
         #[arg(long)]
         description: Option<String>,
     },
+    /// 删除任务（不可撤销）
+    Delete {
+        /// 清单 ID
+        list_id: String,
+        /// 任务 ID
+        task_id: String,
+    },
 }
 
 // ─── 数据模型（对齐 provider/internal/task） ───
@@ -129,6 +136,7 @@ fn resolve_base(cli_server: &Option<String>) -> String {
 fn http_json(method: &str, url: &str, body: Option<&str>) -> Result<serde_json::Value, String> {
     let resp = match method {
         "GET" => ureq::get(url).call(),
+        "DELETE" => ureq::delete(url).call(),
         "PUT" => ureq::put(url)
             .set("Content-Type", "application/json")
             .send_string(body.unwrap_or("")),
@@ -300,6 +308,21 @@ fn add(
     }
 }
 
+/// delete：DELETE /api/lists/{id}/tasks/{task_id}
+fn delete(base: &str, list_id: &str, task_id: &str, json: bool) {
+    let v = http_json(
+        "DELETE",
+        &format!("{base}/api/lists/{list_id}/tasks/{task_id}"),
+        None,
+    )
+    .unwrap_or_else(|e| exit_err(&e));
+    if json {
+        println!("{}", serde_json::to_string(&v).unwrap());
+    } else {
+        println!("✓ 已删除任务 {task_id} @ {base}");
+    }
+}
+
 /// update：先 GET 任务再合并字段，最后 PUT 全量替换
 fn update(
     base: &str,
@@ -352,5 +375,6 @@ fn main() {
         Command::Update { list_id, task_id, status, priority, description } => update(
             &base, list_id, task_id, status.as_deref(), priority.as_deref(), description.as_deref(), cli.json,
         ),
+        Command::Delete { list_id, task_id } => delete(&base, list_id, task_id, cli.json),
     }
 }
