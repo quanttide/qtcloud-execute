@@ -45,6 +45,9 @@ enum Command {
         /// 优先级（urgent/high/medium/low，默认 medium）
         #[arg(long)]
         priority: Option<String>,
+        /// 状态（notStarted/inProgress/reviewing/done，默认 notStarted）
+        #[arg(long)]
+        status: Option<String>,
     },
     /// 更新任务（按 task ID 定位；未提供的字段保持原值，先 GET 合并再 PUT 全量）
     Update {
@@ -266,10 +269,15 @@ fn add(
     title: &str,
     description: Option<&str>,
     priority: Option<&str>,
+    status: Option<&str>,
     json: bool,
 ) {
     let priority = priority.unwrap_or("medium");
     if let Err(e) = check_priority(priority) {
+        exit_err(&e);
+    }
+    let status = status.unwrap_or("notStarted");
+    if let Err(e) = check_status(status) {
         exit_err(&e);
     }
     let existing = http_tasks(base, list_id).unwrap_or_else(|e| exit_err(&e));
@@ -279,7 +287,7 @@ fn add(
         id: task_id.clone(),
         title: title.to_string(),
         description: description.map(String::from),
-        status: "notStarted".to_string(),
+        status: status.to_string(),
         priority: priority.to_string(),
     };
     let body = serde_json::to_string(&task).unwrap_or_else(|e| exit_err(&format!("序列化失败: {e}")));
@@ -288,7 +296,7 @@ fn add(
     if json {
         println!("{}", serde_json::to_string(&v).unwrap());
     } else {
-        println!("✓ 已新增任务 {task_id} → {title} (notStarted/{priority}) @ {base}");
+        println!("✓ 已新增任务 {task_id} → {title} ({status}/{priority}) @ {base}");
     }
 }
 
@@ -338,8 +346,8 @@ fn main() {
     match &cli.command {
         Command::Lists => lists(&base, cli.json),
         Command::Tasks { list_id, status } => tasks(&base, list_id, status.as_deref(), cli.json),
-        Command::Add { list_id, title, description, priority } => add(
-            &base, list_id, title, description.as_deref(), priority.as_deref(), cli.json,
+        Command::Add { list_id, title, description, priority, status } => add(
+            &base, list_id, title, description.as_deref(), priority.as_deref(), status.as_deref(), cli.json,
         ),
         Command::Update { list_id, task_id, status, priority, description } => update(
             &base, list_id, task_id, status.as_deref(), priority.as_deref(), description.as_deref(), cli.json,
