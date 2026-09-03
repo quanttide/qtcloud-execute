@@ -2,16 +2,16 @@
 
 量潮执行云命令行客户端 `qtcloud-execute`，云端任务管理入口，主要供 AI 与脚本调用。纯服务端客户端：只通过 HTTP 对接 provider API（见 [provider.md](provider.md)），不读写本地文件。
 
+本文是完整命令契约（面向集成者）；上手用法与常用流程见 [用户指南](../user-guide/cli.md)。
+
 用法：`qtcloud-execute [全局选项] <子命令> [参数]`。
 
 ## 全局选项
 
-| 选项 | 说明 |
-|------|------|
-| `--server <地址>` | API 基地址覆盖；默认 `https://api.quanttide.com/qtcloud-execute` |
-| `--json` | JSON 输出，透传服务端响应（AI 友好） |
-| `-h` / `--help` | 帮助 |
-| `-V` / `--version` | 版本号 |
+- `--server <地址>`——API 基地址覆盖；默认 `https://api.quanttide.com/qtcloud-execute`
+- `--json`——JSON 输出，透传服务端响应（AI 友好）
+- `-h` / `--help`——帮助
+- `-V` / `--version`——版本号
 
 基地址解析优先级：`--server` > 环境变量 `QTCLOUD_EXECUTE_API_BASE_URL` > 默认系统级网关。地址末尾斜杠会被去除。
 

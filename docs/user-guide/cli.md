@@ -41,58 +41,15 @@ qtcloud-execute lists
 - 状态：`notStarted` 未开始、`inProgress` 执行中、`reviewing` 评审中、`done` 已完成
 - 优先级：`urgent` 紧急、`high` 高、`medium` 中、`low` 低
 
-## 命令
+## 命令一览
 
-### lists
+- `lists`——列出全部任务清单及各自任务数
+- `tasks <清单ID>`——列出某清单的任务，可按 `--status` 过滤
+- `add <清单ID> <标题>`——新增任务
+- `update <清单ID> <任务ID>`——更新任务的状态/优先级/描述
+- `delete <清单ID> <任务ID>`——删除任务，不可撤销
 
-列出全部任务清单及各自任务数。
-
-```bash
-qtcloud-execute lists
-```
-
-### tasks
-
-列出某清单的任务，可按状态过滤。
-
-```bash
-qtcloud-execute tasks <清单ID> [--status <状态>]
-```
-
-### add
-
-新增任务，任务 ID 由 CLI 自动生成。默认状态 `notStarted`、默认优先级 `medium`。
-
-```bash
-qtcloud-execute add <清单ID> <标题> [--status <状态>] [--priority <优先级>] [--description <描述>]
-```
-
-### update
-
-按任务 ID 更新字段，未提供的字段保持原值（先读取再合并）。至少提供一项要更新的字段。
-
-```bash
-qtcloud-execute update <清单ID> <任务ID> [--status <状态>] [--priority <优先级>] [--description <描述>]
-```
-
-### delete
-
-删除任务。
-
-```bash
-qtcloud-execute delete <清单ID> <任务ID>
-```
-
-> 删除不可撤销，执行前确认任务 ID。
-
-## JSON 输出
-
-命令加 `--json` 后直接输出服务端原样 JSON，便于程序解析，AI 调用常用：
-
-```bash
-qtcloud-execute lists --json
-qtcloud-execute tasks qtdata --status inProgress --json
-```
+每个命令的完整签名、参数默认值、JSON 输出与退出行为见 [CLI 参考](../api-references/cli.md)。
 
 ## 常用流程
 
