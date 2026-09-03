@@ -4,7 +4,7 @@ import '../models/task.dart';
 
 /// 任务详情弹窗——清单内就地操作，不跳页。
 ///
-/// 纯组件：不持有 Cubit/仓储。状态/优先级点选即改、描述编辑保存，
+/// 纯组件：不持有 Cubit/仓储。标题/描述编辑保存、状态/优先级点选即改，
 /// 所有变更通过 [onUpdated] 回调交给页面（页面负责写仓储并刷新看板）。
 ///
 /// 状态任意选择（真看板——自由来回，不限定只前进）。
@@ -50,12 +50,14 @@ class _TaskDetailDialogState extends State<TaskDetailDialog> {
   /// 弹窗内草稿——每处变更即改即存（回调）
   late Task _draft;
 
+  late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
 
   @override
   void initState() {
     super.initState();
     _draft = widget.task;
+    _titleController = TextEditingController(text: widget.task.title);
     _descriptionController = TextEditingController(
       text: widget.task.description,
     );
@@ -63,6 +65,7 @@ class _TaskDetailDialogState extends State<TaskDetailDialog> {
 
   @override
   void dispose() {
+    _titleController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
@@ -86,9 +89,15 @@ class _TaskDetailDialogState extends State<TaskDetailDialog> {
     _apply(_draft.copyWith(priority: priority));
   }
 
-  /// 保存描述：trim 后提交。
+  /// 保存标题 + 描述：trim 后提交（标题清空则保留原标题）。
   void _save() {
-    _apply(_draft.copyWith(description: _descriptionController.text));
+    final title = _titleController.text.trim();
+    _apply(
+      _draft.copyWith(
+        title: title.isEmpty ? null : title,
+        description: _descriptionController.text,
+      ),
+    );
     Navigator.of(context).pop();
   }
 
@@ -136,15 +145,23 @@ class _TaskDetailDialogState extends State<TaskDetailDialog> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 标题 + 关闭
+              // 标题（可编辑）+ 关闭
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: Text(
-                      _draft.title,
+                    child: TextField(
+                      key: const ValueKey('title-field'),
+                      controller: _titleController,
                       style: theme.textTheme.titleLarge,
+                      maxLines: null,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
                     ),
                   ),
+                  const SizedBox(width: 8),
                   IconButton(
                     tooltip: '关闭',
                     icon: const Icon(Icons.close),

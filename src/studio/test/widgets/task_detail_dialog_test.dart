@@ -142,6 +142,36 @@ void main() {
     });
   });
 
+  group('TaskDetailDialog 标题编辑', () {
+    testWidgets('编辑标题 + 保存触发 onUpdated（trim 后提交）', (tester) async {
+      final (updated, _) = await pumpDialog(tester);
+
+      await tester.enterText(
+        find.byKey(const ValueKey('title-field')),
+        '  财务平台部署（改名）  ',
+      );
+      await tester.tap(find.byKey(const ValueKey('save-description')));
+      await tester.pumpAndSettle();
+
+      expect(updated, hasLength(1));
+      expect(updated.last.title, '财务平台部署（改名）');
+      // 描述未编辑保持原值
+      expect(updated.last.description, 'ACR 实例凭证待确认，已发 issue');
+      // 保存后弹窗关闭
+      expect(find.byType(TaskDetailDialog), findsNothing);
+    });
+
+    testWidgets('标题清空后保存：保留原标题', (tester) async {
+      final (updated, _) = await pumpDialog(tester);
+
+      await tester.enterText(find.byKey(const ValueKey('title-field')), '  ');
+      await tester.tap(find.byKey(const ValueKey('save-description')));
+      await tester.pumpAndSettle();
+
+      expect(updated.last.title, '财务平台部署');
+    });
+  });
+
   group('TaskDetailDialog 描述编辑', () {
     testWidgets('编辑 + 保存触发 onUpdated 并关闭弹窗', (tester) async {
       final (updated, _) = await pumpDialog(tester);
