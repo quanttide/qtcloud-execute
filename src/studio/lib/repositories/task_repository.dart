@@ -33,6 +33,9 @@ abstract class TaskRepository {
   /// 更新指定清单中的任务：同 id 替换，不存在则新增
   Future<void> updateTask(String listId, Task task);
 
+  /// 删除指定清单中的任务（清单或任务不存在时抛错）
+  Future<void> deleteTask(String listId, String taskId);
+
   /// 持久化到存储（API 实现：服务端随 [updateTask] 落盘，此处为无操作）
   Future<void> save();
 }
@@ -117,8 +120,9 @@ class InMemoryTaskRepository implements TaskRepository {
   final Map<String, TaskListData> _lists;
 
   @override
-  Future<List<TaskList>> loadLists() async =>
-      [for (final list in _lists.values) list.toTaskList()];
+  Future<List<TaskList>> loadLists() async => [
+    for (final list in _lists.values) list.toTaskList(),
+  ];
 
   @override
   Future<List<Task>> loadTasks(String listId) async {
@@ -135,6 +139,19 @@ class InMemoryTaskRepository implements TaskRepository {
   }
 
   @override
+  Future<void> deleteTask(String listId, String taskId) async {
+    final list = _lists[listId];
+    if (list == null) {
+      throw StateError('清单不存在：$listId');
+    }
+    final before = list.tasks.length;
+    list.tasks.removeWhere((t) => t.id == taskId);
+    if (list.tasks.length == before) {
+      throw StateError('任务不存在：$taskId');
+    }
+  }
+
+  @override
   Future<void> save() async {
     // 内存实现：无需持久化
   }
@@ -146,6 +163,7 @@ class InMemoryTaskRepository implements TaskRepository {
 /// - `GET  /api/lists`                        → 全部清单（含任务）
 /// - `GET  /api/lists/{id}/tasks`             → 指定清单的任务
 /// - `PUT  /api/lists/{id}/tasks/{taskId}`    → 更新/新增任务（upsert）
+/// - `DELETE /api/lists/{id}/tasks/{taskId}`  → 删除任务
 /// - `save()` 为无操作（服务端随 updateTask 落盘）
 class ApiTaskRepository implements TaskRepository {
   ApiTaskRepository({required String baseUrl, http.Client? client})
@@ -163,9 +181,7 @@ class ApiTaskRepository implements TaskRepository {
   @override
   Future<List<TaskList>> loadLists() async {
     final json = await _getJson('/api/lists');
-    return [
-      for (final list in parseListsJson(json)) list.toTaskList(),
-    ];
+    return [for (final list in parseListsJson(json)) list.toTaskList()];
   }
 
   @override
@@ -184,6 +200,12 @@ class ApiTaskRepository implements TaskRepository {
       headers: const {'Content-Type': 'application/json'},
       body: jsonEncode(task.toJson()),
     );
+    _ensureOk(resp);
+  }
+
+  @override
+  Future<void> deleteTask(String listId, String taskId) async {
+    final resp = await _client.delete(_uri('/api/lists/$listId/tasks/$taskId'));
     _ensureOk(resp);
   }
 

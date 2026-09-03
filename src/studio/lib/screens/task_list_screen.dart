@@ -61,6 +61,8 @@ class _TaskListScreenState extends State<TaskListScreen> {
       task: task,
       onUpdated: (updated) =>
           unawaited(context.read<BoardCubit>().updateTask(updated)),
+      onDeleted: (taskId) =>
+          unawaited(context.read<BoardCubit>().deleteTask(taskId)),
     );
   }
 
@@ -69,8 +71,9 @@ class _TaskListScreenState extends State<TaskListScreen> {
     await TaskCreateDialog.show(
       context,
       status: status,
-      onCreate: (draft) =>
-          unawaited(context.read<BoardCubit>().createTask(draft, status: status)),
+      onCreate: (draft) => unawaited(
+        context.read<BoardCubit>().createTask(draft, status: status),
+      ),
     );
   }
 
@@ -78,9 +81,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
   void _onDrop(Task task, TaskStatus targetStatus) {
     if (targetStatus == task.status) return;
     // moveTo 自由方向——允许前进也允许回退；同状态视为无操作
-    unawaited(
-      context.read<BoardCubit>().updateTask(task.moveTo(targetStatus)),
-    );
+    unawaited(context.read<BoardCubit>().updateTask(task.moveTo(targetStatus)));
   }
 
   @override
@@ -89,9 +90,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
       appBar: AppBar(title: const Text('执行云看板')),
       body: MultiBlocListener(
         listeners: [
-          BlocListener<TaskListCubit, TaskListState>(
-            listener: _onListChanged,
-          ),
+          BlocListener<TaskListCubit, TaskListState>(listener: _onListChanged),
         ],
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,

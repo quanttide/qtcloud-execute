@@ -35,37 +35,33 @@ void main() {
       // 四列固定（推进阶梯完整）
       expect(projection.columns.keys.toSet(), TaskStatus.values.toSet());
       // qtdata：inProgress 列 2 个任务、reviewing 列 2 个、其余为空
-      expect(
-        projection.tasksOf(TaskStatus.inProgress).map((t) => t.id),
-        ['qtdata-project-closeout', 'qtdata-reproduction'],
-      );
-      expect(
-        projection.tasksOf(TaskStatus.reviewing).map((t) => t.id),
-        ['qtdata-project-review', 'qtdata-product-research'],
-      );
+      expect(projection.tasksOf(TaskStatus.inProgress).map((t) => t.id), [
+        'qtdata-project-closeout',
+        'qtdata-reproduction',
+      ]);
+      expect(projection.tasksOf(TaskStatus.reviewing).map((t) => t.id), [
+        'qtdata-project-review',
+        'qtdata-product-research',
+      ]);
       expect(projection.tasksOf(TaskStatus.notStarted), isEmpty);
       expect(projection.tasksOf(TaskStatus.done), isEmpty);
     });
 
     test('清单切换：loadTasks 新清单，看板投影跟随', () async {
       await cubit.loadTasks('qtdata');
-      expect(
-        cubit.state.tasks.tasksOf(TaskStatus.inProgress),
-        hasLength(2),
-      );
+      expect(cubit.state.tasks.tasksOf(TaskStatus.inProgress), hasLength(2));
 
       await cubit.loadTasks('qtclass');
 
       final BoardProjection projection = cubit.state.tasks;
       expect(projection.columns.keys.toSet(), TaskStatus.values.toSet());
-      expect(
-        projection.tasksOf(TaskStatus.inProgress).map((t) => t.id),
-        ['qtclass-recruitment', 'qtclass-mechanism'],
-      );
-      expect(
-        projection.tasksOf(TaskStatus.reviewing).map((t) => t.id),
-        ['qtclass-innovation'],
-      );
+      expect(projection.tasksOf(TaskStatus.inProgress).map((t) => t.id), [
+        'qtclass-recruitment',
+        'qtclass-mechanism',
+      ]);
+      expect(projection.tasksOf(TaskStatus.reviewing).map((t) => t.id), [
+        'qtclass-innovation',
+      ]);
       // qtclass 无已完成任务
       expect(projection.tasksOf(TaskStatus.done), isEmpty);
     });
@@ -152,9 +148,7 @@ void main() {
       // 重新 loadTasks 后投影一致（仓储持久化）
       await cubit.loadTasks('qtdata');
       expect(
-        cubit.state.tasks
-            .tasksOf(TaskStatus.reviewing)
-            .map((t) => t.id),
+        cubit.state.tasks.tasksOf(TaskStatus.reviewing).map((t) => t.id),
         contains('qtdata-reproduction'),
       );
     });
@@ -180,6 +174,21 @@ void main() {
       // 仓储持久化
       final List<Task> stored = await repository.loadTasks('qtdata');
       expect(stored, hasLength(5)); // 4 已有 + 1 新增
+    });
+
+    test('deleteTask 从仓储移除并重投影', () async {
+      await cubit.loadTasks('qtdata');
+
+      await cubit.deleteTask('qtdata-project-closeout');
+
+      // 投影不再包含已删除任务
+      expect(
+        cubit.state.tasks.tasksOf(TaskStatus.inProgress).map((t) => t.id),
+        isNot(contains('qtdata-project-closeout')),
+      );
+      // 仓储同步移除（4 → 3）
+      final List<Task> stored = await repository.loadTasks('qtdata');
+      expect(stored, hasLength(3));
     });
 
     test('createTask 生成 id 并追加到指定状态列', () async {

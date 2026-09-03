@@ -13,6 +13,7 @@ class TaskDetailDialog extends StatefulWidget {
     super.key,
     required this.task,
     required this.onUpdated,
+    this.onDeleted,
   });
 
   /// 初始任务（清单页传入）
@@ -21,15 +22,23 @@ class TaskDetailDialog extends StatefulWidget {
   /// 变更回调（清单页刷新列表——本组件不写仓储）
   final ValueChanged<Task> onUpdated;
 
+  /// 删除回调（确认后触发；null 时隐藏删除按钮）
+  final ValueChanged<String>? onDeleted;
+
   /// 便捷打开：右侧滑出面板（showDialog 右对齐包装）
   static Future<void> show(
     BuildContext context, {
     required Task task,
     required ValueChanged<Task> onUpdated,
+    ValueChanged<String>? onDeleted,
   }) {
     return showDialog<void>(
       context: context,
-      builder: (_) => TaskDetailDialog(task: task, onUpdated: onUpdated),
+      builder: (_) => TaskDetailDialog(
+        task: task,
+        onUpdated: onUpdated,
+        onDeleted: onDeleted,
+      ),
     );
   }
 
@@ -81,6 +90,32 @@ class _TaskDetailDialogState extends State<TaskDetailDialog> {
   void _save() {
     _apply(_draft.copyWith(description: _descriptionController.text));
     Navigator.of(context).pop();
+  }
+
+  /// 删除任务：二次确认后回调（页面写仓储并刷新看板）。
+  Future<void> _confirmDelete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('删除任务'),
+        content: Text('确认删除「${_draft.title}」？此操作不可撤销。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            key: const ValueKey('confirm-delete'),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('删除'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    if (!mounted) return;
+    Navigator.of(context).pop();
+    widget.onDeleted?.call(widget.task.id);
   }
 
   @override
@@ -162,13 +197,24 @@ class _TaskDetailDialogState extends State<TaskDetailDialog> {
                 ),
               ),
               const SizedBox(height: 16),
-              Align(
-                alignment: Alignment.centerRight,
-                child: FilledButton(
-                  key: const ValueKey('save-description'),
-                  onPressed: _save,
-                  child: const Text('保存'),
-                ),
+              Row(
+                children: [
+                  if (widget.onDeleted != null)
+                    TextButton(
+                      key: const ValueKey('delete-task'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: theme.colorScheme.error,
+                      ),
+                      onPressed: _confirmDelete,
+                      child: const Text('删除'),
+                    ),
+                  const Spacer(),
+                  FilledButton(
+                    key: const ValueKey('save-description'),
+                    onPressed: _save,
+                    child: const Text('保存'),
+                  ),
+                ],
               ),
             ],
           ),

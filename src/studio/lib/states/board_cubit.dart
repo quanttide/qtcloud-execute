@@ -84,6 +84,17 @@ class BoardCubit extends Cubit<BoardState> {
     _emit();
   }
 
+  /// 删除任务：从仓储移除后重载并重投影。
+  Future<void> deleteTask(String taskId) async {
+    final id = _listId;
+    if (id == null) {
+      throw StateError('尚未加载项目：先调用 loadTasks');
+    }
+    await _repository.deleteTask(id, taskId);
+    _tasks = await _repository.loadTasks(id);
+    _emit();
+  }
+
   /// 新增任务到当前项目（列头「+」）：生成 id 后写仓储并重投影。
   Future<void> createTask(TaskDraft draft, {required TaskStatus status}) async {
     final id = _listId;
