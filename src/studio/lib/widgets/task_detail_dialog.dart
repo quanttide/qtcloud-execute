@@ -21,7 +21,7 @@ class TaskDetailDialog extends StatefulWidget {
   /// 变更回调（清单页刷新列表——本组件不写仓储）
   final ValueChanged<Task> onUpdated;
 
-  /// 便捷打开：showDialog 包装
+  /// 便捷打开：右侧滑出面板（showDialog 右对齐包装）
   static Future<void> show(
     BuildContext context, {
     required Task task,
@@ -87,12 +87,18 @@ class _TaskDetailDialogState extends State<TaskDetailDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Dialog(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480),
-        child: Padding(
+      // 右侧滑出面板：右对齐 + 全高 + 左侧圆角
+      alignment: Alignment.centerRight,
+      insetPadding: EdgeInsets.zero,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.horizontal(left: Radius.circular(16)),
+      ),
+      child: SizedBox(
+        width: 440,
+        height: double.infinity,
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 标题 + 关闭

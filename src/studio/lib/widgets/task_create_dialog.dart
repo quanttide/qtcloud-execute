@@ -28,8 +28,7 @@ class TaskCreateDialog extends StatefulWidget {
   }) {
     return showDialog<void>(
       context: context,
-      builder: (_) =>
-          TaskCreateDialog(status: status, onCreate: onCreate),
+      builder: (_) => TaskCreateDialog(status: status, onCreate: onCreate),
     );
   }
 
@@ -74,15 +73,20 @@ class _TaskCreateDialogState extends State<TaskCreateDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Dialog(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480),
-        child: Padding(
+      // 右侧滑出面板：右对齐 + 全高 + 左侧圆角
+      alignment: Alignment.centerRight,
+      insetPadding: EdgeInsets.zero,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.horizontal(left: Radius.circular(16)),
+      ),
+      child: SizedBox(
+        width: 440,
+        height: double.infinity,
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Row(
                 children: [
                   Expanded(
@@ -149,7 +153,6 @@ class _TaskCreateDialogState extends State<TaskCreateDialog> {
                 ),
               ),
             ],
-            ),
           ),
         ),
       ),
