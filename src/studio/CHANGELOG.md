@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.1.0-beta.13] - 2026-09-03
+
+### Fixed
+
+- CanvasKit 改为从本地 `/canvaskit/` 加载（随 CDN 分发），不再依赖 gstatic.com——国内网络 gstatic 不可达时引擎初始化卡死导致白屏
+
 ## [0.1.0-beta.12] - 2026-09-03
 
 ### Changed
