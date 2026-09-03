@@ -54,10 +54,14 @@ class _TaskListScreenState extends State<TaskListScreen> {
     unawaited(context.read<BoardCubit>().loadTasks(id));
   }
 
-  /// 写操作包装：失败时 SnackBar 提示（写仓储失败不应静默）。
+  /// 写操作包装：成功后刷新清单层快照（switcher 任务数徽章跟随），
+  /// 失败时 SnackBar 提示（写仓储失败不应静默）。
   Future<void> _write(Future<void> action) async {
     try {
       await action;
+      // 新建/删除/更新都会改变数据——刷新清单层（任务数徽章单一事实源）
+      if (!mounted) return;
+      await context.read<TaskListCubit>().loadLists();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context)

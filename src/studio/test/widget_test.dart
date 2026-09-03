@@ -243,4 +243,36 @@ void main() {
 
     expect(find.textContaining('操作失败'), findsOneWidget);
   });
+
+  testWidgets('删除任务后：清单徽章与看板数字同步更新', (tester) async {
+    await pumpApp(tester);
+
+    // 初始：qtdata 4 个任务，switcher 徽章显示 4
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('list-qtdata')),
+        matching: find.text('4'),
+      ),
+      findsOneWidget,
+    );
+
+    // 点击卡片 → 详情面板 → 删除 → 确认
+    await tester.tap(find.text('客户项目结项推进'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('delete-task')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('confirm-delete')));
+    await tester.pumpAndSettle();
+
+    // 看板：进行中列不再有该任务
+    expect(columnCard('inProgress', 'qtdata-project-closeout'), findsNothing);
+    // 清单徽章：4 → 3（随删除刷新，不再停留旧快照）
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('list-qtdata')),
+        matching: find.text('3'),
+      ),
+      findsOneWidget,
+    );
+  });
 }
