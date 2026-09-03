@@ -25,7 +25,7 @@ struct Cli {
 enum Command {
     /// 列出任务清单
     Lists,
-    /// 列出某清单的任务（显示 title/status/priority/category）
+    /// 列出某清单的任务（显示 title/status/priority）
     Tasks {
         /// 清单 ID
         list_id: String,
@@ -45,9 +45,6 @@ enum Command {
         /// 优先级（urgent/high/medium/low，默认 medium）
         #[arg(long)]
         priority: Option<String>,
-        /// 分类（如 business/product/operation）
-        #[arg(long)]
-        category: Option<String>,
     },
     /// 更新任务（按 task ID 定位；未提供的字段保持原值，先 GET 合并再 PUT 全量）
     Update {
@@ -64,9 +61,6 @@ enum Command {
         /// 任务描述
         #[arg(long)]
         description: Option<String>,
-        /// 分类
-        #[arg(long)]
-        category: Option<String>,
     },
 }
 
@@ -80,8 +74,6 @@ struct Task {
     description: Option<String>,
     status: String,
     priority: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    category: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -179,9 +171,9 @@ fn check_priority(priority: &str) -> Result<(), String> {
     }
 }
 
-fn ensure_update_fields(status: Option<&str>, priority: Option<&str>, description: Option<&str>, category: Option<&str>) {
-    if status.is_none() && priority.is_none() && description.is_none() && category.is_none() {
-        exit_err("至少提供一项要更新的字段（--status/--priority/--description/--category）");
+fn ensure_update_fields(status: Option<&str>, priority: Option<&str>, description: Option<&str>) {
+    if status.is_none() && priority.is_none() && description.is_none() {
+        exit_err("至少提供一项要更新的字段（--status/--priority/--description）");
     }
     if let Some(s) = status {
         if let Err(e) = check_status(s) {
@@ -243,8 +235,7 @@ fn tasks(base: &str, list_id: &str, status_filter: Option<&str>, json: bool) {
         return;
     }
     for t in &filtered {
-        let cat = t.category.as_deref().unwrap_or("-");
-        println!("  {:<38} {:<11} {:<7} {}", t.title, t.status, t.priority, cat);
+        println!("  {:<38} {:<11} {:<7}", t.title, t.status, t.priority);
         if let Some(d) = &t.description {
             println!("      {}  {d}", t.id);
         } else {
@@ -275,7 +266,6 @@ fn add(
     title: &str,
     description: Option<&str>,
     priority: Option<&str>,
-    category: Option<&str>,
     json: bool,
 ) {
     let priority = priority.unwrap_or("medium");
@@ -291,7 +281,6 @@ fn add(
         description: description.map(String::from),
         status: "notStarted".to_string(),
         priority: priority.to_string(),
-        category: category.map(String::from),
     };
     let body = serde_json::to_string(&task).unwrap_or_else(|e| exit_err(&format!("序列化失败: {e}")));
     let v = http_json("PUT", &format!("{base}/api/lists/{list_id}/tasks/{task_id}"), Some(&body))
@@ -311,10 +300,9 @@ fn update(
     status: Option<&str>,
     priority: Option<&str>,
     description: Option<&str>,
-    category: Option<&str>,
     json: bool,
 ) {
-    ensure_update_fields(status, priority, description, category);
+    ensure_update_fields(status, priority, description);
 
     let tasks = http_tasks(base, list_id).unwrap_or_else(|e| exit_err(&e));
     let mut task = tasks
@@ -331,9 +319,6 @@ fn update(
     }
     if let Some(d) = description {
         task.description = Some(d.to_string());
-    }
-    if let Some(c) = category {
-        task.category = Some(c.to_string());
     }
 
     let body = serde_json::to_string(&task).unwrap_or_else(|e| exit_err(&format!("序列化失败: {e}")));
@@ -353,11 +338,11 @@ fn main() {
     match &cli.command {
         Command::Lists => lists(&base, cli.json),
         Command::Tasks { list_id, status } => tasks(&base, list_id, status.as_deref(), cli.json),
-        Command::Add { list_id, title, description, priority, category } => add(
-            &base, list_id, title, description.as_deref(), priority.as_deref(), category.as_deref(), cli.json,
+        Command::Add { list_id, title, description, priority } => add(
+            &base, list_id, title, description.as_deref(), priority.as_deref(), cli.json,
         ),
-        Command::Update { list_id, task_id, status, priority, description, category } => update(
-            &base, list_id, task_id, status.as_deref(), priority.as_deref(), description.as_deref(), category.as_deref(), cli.json,
+        Command::Update { list_id, task_id, status, priority, description } => update(
+            &base, list_id, task_id, status.as_deref(), priority.as_deref(), description.as_deref(), cli.json,
         ),
     }
 }
