@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/task.dart';
-import '../states/board_cubit.dart';
+import '../states/board_bloc.dart';
 
 /// 新建任务弹窗（列头「+」触发）——目标状态列由调用方指定。
 ///

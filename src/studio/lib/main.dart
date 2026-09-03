@@ -7,8 +7,8 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 
 import 'repositories/task_repository.dart';
 import 'router.dart';
-import 'states/board_cubit.dart';
-import 'states/task_list_cubit.dart';
+import 'states/board_bloc.dart';
+import 'states/task_list_bloc.dart';
 import 'theme.dart';
 
 /// API 基地址：`--dart-define=QTCLOUD_EXECUTE_API_BASE_URL=<url>`（生产在部署时注入）。
@@ -101,8 +101,8 @@ class _QuantTideExecuteStudioAppState extends State<QuantTideExecuteStudioApp> {
       // 在 Navigator 之上提供 Cubit——页面经 context.read 消费，不直接持有仓储
       builder: (context, child) => MultiBlocProvider(
         providers: [
-          BlocProvider(create: (_) => TaskListCubit(repository)),
-          BlocProvider(create: (_) => BoardCubit(repository)),
+          BlocProvider(create: (_) => TaskListBloc(repository)),
+          BlocProvider(create: (_) => BoardBloc(repository)),
         ],
         child: child!,
       ),

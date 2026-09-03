@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:qtcloud_execute_studio/models/task.dart';
-import 'package:qtcloud_execute_studio/states/board_cubit.dart';
+import 'package:qtcloud_execute_studio/states/board_bloc.dart';
 import 'package:qtcloud_execute_studio/widgets/board_view.dart';
 import 'package:qtcloud_execute_studio/widgets/task_card.dart';
 

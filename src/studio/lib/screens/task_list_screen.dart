@@ -1,11 +1,9 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../models/task.dart';
-import '../states/board_cubit.dart';
-import '../states/task_list_cubit.dart';
+import '../states/board_bloc.dart';
+import '../states/task_list_bloc.dart';
 import '../widgets/board_view.dart';
 import '../widgets/task_create_dialog.dart';
 import '../widgets/task_detail_dialog.dart';
@@ -14,15 +12,17 @@ import '../widgets/task_list_switcher.dart';
 /// 执行云首页——真看板（方案 A）页面。
 ///
 /// 一次一个项目（TaskList/清单）为隔离单元：
-/// - 顶部项目切换器（TaskListCubit）——项目即隔离单元，切换看板跟随
-/// - 状态泳道看板（BoardCubit）——真看板，任务卡在不同状态列间自由来回
+/// - 顶部项目切换器（TaskListBloc）——项目即隔离单元，切换看板跟随
+/// - 状态泳道看板（BoardBloc）——真看板，任务卡在不同状态列间自由来回
 /// - 列头「+」新建任务到目标列（TaskCreateDialog）
 ///
-/// 数据流（单向，Cubit 由 main.dart 的 MultiBlocProvider 注入）：
-/// - 项目切换 → BoardCubit.loadTasks
-/// - 卡片点击 → TaskDetailDialog → onUpdated → BoardCubit.updateTask
-/// - 卡片拖拽跨列 → BoardCubit.updateTask（moveTo 自由方向）
-/// - 列头「+」 → TaskCreateDialog → BoardCubit.createTask
+/// 数据流（单向，Bloc 由 main.dart 的 MultiBlocProvider 注入）：
+/// - 项目切换 → BoardLoadTasks
+/// - 卡片点击 → TaskDetailDialog → onUpdated → BoardUpdateTask
+/// - 卡片拖拽跨列 → BoardUpdateTask（moveTo 自由方向）
+/// - 列头「+」 → TaskCreateDialog → BoardCreateTask
+/// - 写操作成功（writeToken 变化）→ TaskListLoadLists 刷新清单快照
+/// - 写操作失败（errorToken 变化）→ SnackBar 提示
 class TaskListScreen extends StatefulWidget {
   const TaskListScreen({super.key});
 
@@ -43,7 +43,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
   @override
   void initState() {
     super.initState();
-    unawaited(context.read<TaskListCubit>().loadLists());
+    context.read<TaskListBloc>().add(const TaskListLoadLists());
   }
 
   /// 项目切换跟随：currentListId 变化 → 以新 id 加载看板。
@@ -51,39 +51,35 @@ class _TaskListScreenState extends State<TaskListScreen> {
     final id = state.currentListId;
     if (id == null || id == _loadedListId) return;
     _loadedListId = id;
-    unawaited(context.read<BoardCubit>().loadTasks(id));
+    context.read<BoardBloc>().add(BoardLoadTasks(id));
   }
 
-  /// 写操作包装：成功后刷新清单层快照（switcher 任务数徽章跟随），
-  /// 失败时 SnackBar 提示（写仓储失败不应静默）。
-  Future<void> _write(Future<void> action) async {
-    try {
-      await action;
-      // 新建/删除/更新都会改变数据——刷新清单层（任务数徽章单一事实源）
-      if (!mounted) return;
-      await context.read<TaskListCubit>().loadLists();
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text('操作失败：$e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-    }
+  /// 写操作失败（errorToken 变化）→ SnackBar 提示，不静默。
+  void _onWriteError(BuildContext context, BoardState state) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text('操作失败：${state.errorMessage}'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
   }
 
-  /// 卡片点击 → 详情弹窗打开；操作回调写仓储并刷新看板（单向数据流）。
+  /// 写操作成功（writeToken 变化）→ 刷新清单层快照（switcher 徽章跟随）。
+  void _onWriteSuccess(BuildContext context, BoardState state) {
+    context.read<TaskListBloc>().add(const TaskListLoadLists());
+  }
+
+  /// 卡片点击 → 详情弹窗打开；操作回调派发事件（单向数据流）。
   Future<void> _openDetail(Task task) async {
     await TaskDetailDialog.show(
       context,
       task: task,
       onUpdated: (updated) =>
-          unawaited(_write(context.read<BoardCubit>().updateTask(updated))),
+          context.read<BoardBloc>().add(BoardUpdateTask(updated)),
       onDeleted: (taskId) =>
-          unawaited(_write(context.read<BoardCubit>().deleteTask(taskId))),
+          context.read<BoardBloc>().add(BoardDeleteTask(taskId)),
     );
   }
 
@@ -92,9 +88,8 @@ class _TaskListScreenState extends State<TaskListScreen> {
     await TaskCreateDialog.show(
       context,
       status: status,
-      onCreate: (draft) => unawaited(
-        _write(context.read<BoardCubit>().createTask(draft, status: status)),
-      ),
+      onCreate: (draft) =>
+          context.read<BoardBloc>().add(BoardCreateTask(draft, status: status)),
     );
   }
 
@@ -102,9 +97,7 @@ class _TaskListScreenState extends State<TaskListScreen> {
   void _onDrop(Task task, TaskStatus targetStatus) {
     if (targetStatus == task.status) return;
     // moveTo 自由方向——允许前进也允许回退；同状态视为无操作
-    unawaited(
-      _write(context.read<BoardCubit>().updateTask(task.moveTo(targetStatus))),
-    );
+    context.read<BoardBloc>().add(BoardUpdateTask(task.moveTo(targetStatus)));
   }
 
   @override
@@ -113,7 +106,17 @@ class _TaskListScreenState extends State<TaskListScreen> {
       appBar: AppBar(title: const Text('执行云看板')),
       body: MultiBlocListener(
         listeners: [
-          BlocListener<TaskListCubit, TaskListState>(listener: _onListChanged),
+          BlocListener<TaskListBloc, TaskListState>(listener: _onListChanged),
+          BlocListener<BoardBloc, BoardState>(
+            listenWhen: (previous, current) =>
+                current.errorToken != previous.errorToken,
+            listener: _onWriteError,
+          ),
+          BlocListener<BoardBloc, BoardState>(
+            listenWhen: (previous, current) =>
+                current.writeToken != previous.writeToken,
+            listener: _onWriteSuccess,
+          ),
         ],
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -121,18 +124,18 @@ class _TaskListScreenState extends State<TaskListScreen> {
             // 左侧独立项目导航栏（项目即隔离单元——独立的切换器，非过滤器）
             SizedBox(
               width: 220,
-              child: BlocBuilder<TaskListCubit, TaskListState>(
+              child: BlocBuilder<TaskListBloc, TaskListState>(
                 builder: (context, state) => TaskListSwitcher(
                   lists: state.lists,
                   currentListId: state.currentListId,
                   onSwitch: (id) =>
-                      context.read<TaskListCubit>().switchList(id),
+                      context.read<TaskListBloc>().add(TaskListSwitchList(id)),
                 ),
               ),
             ),
             // 右侧：状态泳道看板（真看板）
             Expanded(
-              child: BlocBuilder<BoardCubit, BoardState>(
+              child: BlocBuilder<BoardBloc, BoardState>(
                 builder: (context, state) => BoardView(
                   projection: state.tasks,
                   wipLimits: _wipLimits,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/task.dart';
-import '../states/board_cubit.dart';
+import '../states/board_bloc.dart';
 import 'task_card.dart';
 
 /// 真看板：状态泳道（列 = 状态，横向推进阶梯），任务卡在列间自由来回。

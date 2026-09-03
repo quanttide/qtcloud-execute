@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## [0.1.0-beta.12] - 2026-09-03
+
+### Changed
+
+- 状态层 Cubit → Bloc（事件驱动）：TaskListCubit→TaskListBloc（LoadLists/SwitchList）、BoardCubit→BoardBloc（LoadTasks/UpdateTask/DeleteTask/CreateTask）
+- 写操作结果信号入状态：`writeToken`（成功计数，页面据此刷新清单快照）+ `errorToken`/`errorMessage`（失败提示，不静默）；写失败不再向上抛异常
+
 ## [0.1.0-beta.11] - 2026-09-03
 
 ### Fixed
