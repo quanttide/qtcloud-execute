@@ -50,8 +50,7 @@ class TaskListSwitcher extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               children: [
-                for (final list in lists)
-                  _buildItem(context, list),
+                for (final list in lists) _buildItem(context, list),
                 if (onCreateList != null) _buildCreateItem(context),
               ],
             ),
@@ -85,7 +84,9 @@ class TaskListSwitcher extends StatelessWidget {
                   width: 3,
                   height: 18,
                   decoration: BoxDecoration(
-                    color: selected ? theme.colorScheme.primary : Colors.transparent,
+                    color: selected
+                        ? theme.colorScheme.primary
+                        : Colors.transparent,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -99,8 +100,10 @@ class TaskListSwitcher extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 1,
+                  ),
                   decoration: BoxDecoration(
                     color: selected
                         ? theme.colorScheme.primary
@@ -143,10 +146,7 @@ class TaskListSwitcher extends StatelessWidget {
                 const SizedBox(width: 3),
                 const Icon(Icons.add, size: 18),
                 const SizedBox(width: 10),
-                Text(
-                  '新增清单',
-                  style: theme.textTheme.bodyMedium,
-                ),
+                Text('新增清单', style: theme.textTheme.bodyMedium),
               ],
             ),
           ),

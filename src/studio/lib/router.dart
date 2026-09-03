@@ -8,11 +8,6 @@ import 'screens/task_list_screen.dart';
 /// Cubit 由 main.dart 的 MultiBlocProvider 注入，路由无需再传递仓储。
 GoRouter buildRouter() {
   return GoRouter(
-    routes: [
-      GoRoute(
-        path: '/',
-        builder: (_, _) => const TaskListScreen(),
-      ),
-    ],
+    routes: [GoRoute(path: '/', builder: (_, _) => const TaskListScreen())],
   );
 }

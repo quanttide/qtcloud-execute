@@ -49,17 +49,21 @@ void main() {
     });
 
     testWidgets('新增项目自动出现（数据驱动）', (tester) async {
-      await pumpSwitcher(tester, items: const [
-        TaskList(id: 'qtdata', name: '量潮数据', tasks: []),
-      ]);
+      await pumpSwitcher(
+        tester,
+        items: const [TaskList(id: 'qtdata', name: '量潮数据', tasks: [])],
+      );
       expect(find.text('量潮数据'), findsOneWidget);
       expect(find.text('量潮课堂'), findsNothing);
 
       // 新项目加入后自动出现
-      await pumpSwitcher(tester, items: const [
-        TaskList(id: 'qtdata', name: '量潮数据', tasks: []),
-        TaskList(id: 'newbiz', name: '新业务', tasks: []),
-      ]);
+      await pumpSwitcher(
+        tester,
+        items: const [
+          TaskList(id: 'qtdata', name: '量潮数据', tasks: []),
+          TaskList(id: 'newbiz', name: '新业务', tasks: []),
+        ],
+      );
       expect(find.text('新业务'), findsOneWidget);
     });
 
@@ -74,12 +78,31 @@ void main() {
     });
 
     testWidgets('任务数徽章显示', (tester) async {
-      await pumpSwitcher(tester, items: const [
-        TaskList(id: 'qtdata', name: '量潮数据', tasks: [
-          Task(id: 'a', title: 'a', description: '', status: TaskStatus.notStarted, priority: TaskPriority.low),
-          Task(id: 'b', title: 'b', description: '', status: TaskStatus.notStarted, priority: TaskPriority.low),
-        ]),
-      ]);
+      await pumpSwitcher(
+        tester,
+        items: const [
+          TaskList(
+            id: 'qtdata',
+            name: '量潮数据',
+            tasks: [
+              Task(
+                id: 'a',
+                title: 'a',
+                description: '',
+                status: TaskStatus.notStarted,
+                priority: TaskPriority.low,
+              ),
+              Task(
+                id: 'b',
+                title: 'b',
+                description: '',
+                status: TaskStatus.notStarted,
+                priority: TaskPriority.low,
+              ),
+            ],
+          ),
+        ],
+      );
 
       expect(find.text('2'), findsOneWidget);
     });

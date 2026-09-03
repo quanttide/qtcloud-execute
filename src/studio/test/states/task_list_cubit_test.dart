@@ -32,10 +32,12 @@ void main() {
     test('loadLists 动态加载全部清单，默认选中第一个', () async {
       await cubit.loadLists();
 
-      expect(cubit.state.lists.map((l) => l.id),
-          ['qtdata', 'qtclass', 'qtcloud']);
-      expect(cubit.state.lists.map((l) => l.name),
-          ['量潮数据', '量潮课堂', '量潮云']);
+      expect(cubit.state.lists.map((l) => l.id), [
+        'qtdata',
+        'qtclass',
+        'qtcloud',
+      ]);
+      expect(cubit.state.lists.map((l) => l.name), ['量潮数据', '量潮课堂', '量潮云']);
       expect(cubit.state.currentListId, 'qtdata');
     });
 

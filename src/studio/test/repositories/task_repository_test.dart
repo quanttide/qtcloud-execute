@@ -75,10 +75,7 @@ void main() {
     });
 
     test('未知清单抛 StateError；已知清单合法', () async {
-      await expectLater(
-        repository.loadTasks('unknown'),
-        throwsStateError,
-      );
+      await expectLater(repository.loadTasks('unknown'), throwsStateError);
       await expectLater(
         repository.updateTask(
           'qtdata',

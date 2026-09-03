@@ -7,14 +7,18 @@ import 'package:qtcloud_execute_studio/widgets/board_view.dart';
 import 'package:qtcloud_execute_studio/widgets/task_card.dart';
 
 void main() {
-  Task task(String id, String title, TaskStatus status, TaskPriority priority) =>
-      Task(
-        id: id,
-        title: title,
-        description: '',
-        status: status,
-        priority: priority,
-      );
+  Task task(
+    String id,
+    String title,
+    TaskStatus status,
+    TaskPriority priority,
+  ) => Task(
+    id: id,
+    title: title,
+    description: '',
+    status: status,
+    priority: priority,
+  );
 
   Future<void> pumpBoard(
     WidgetTester tester, {
@@ -107,9 +111,7 @@ void main() {
         wipLimits: const {TaskStatus.inProgress: 1},
       );
 
-      final badgeContainer = find.byKey(
-        const ValueKey('wip-badge-inProgress'),
-      );
+      final badgeContainer = find.byKey(const ValueKey('wip-badge-inProgress'));
       // badge 是 Container 包装的 Text，直接查文本
       expect(badgeContainer, findsOneWidget);
       expect(find.text('2/1'), findsOneWidget);
@@ -125,7 +127,10 @@ void main() {
         wipLimits: const {TaskStatus.inProgress: 3},
       );
 
-      expect(find.byKey(const ValueKey('wip-badge-inProgress')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('wip-badge-inProgress')),
+        findsOneWidget,
+      );
       // 未设上限的列（如 done）显示计数而非徽章
       expect(find.byKey(const ValueKey('column-count-done')), findsOneWidget);
     });
@@ -137,7 +142,11 @@ void main() {
         task('b1', '进行中任务', TaskStatus.inProgress, TaskPriority.high),
       ]);
       Task? tapped;
-      await pumpBoard(tester, projection: projection, onTaskTap: (t) => tapped = t);
+      await pumpBoard(
+        tester,
+        projection: projection,
+        onTaskTap: (t) => tapped = t,
+      );
 
       await tester.tap(find.byKey(const ValueKey('task-card-b1')));
       await tester.pumpAndSettle();

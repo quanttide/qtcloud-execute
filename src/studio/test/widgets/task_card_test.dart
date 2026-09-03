@@ -23,11 +23,7 @@ void main() {
       MaterialApp(
         home: Scaffold(
           body: Center(
-            child: TaskCard(
-              task: task,
-              onTap: onTap,
-              onDragEnd: onDragEnd,
-            ),
+            child: TaskCard(task: task, onTap: onTap, onDragEnd: onDragEnd),
           ),
         ),
       ),
@@ -82,10 +78,7 @@ void main() {
       expect(find.text('进行中'), findsNothing);
       // 优先级标签显示（本次新增——卡片直观展示优先级）
       expect(find.text('紧急'), findsOneWidget);
-      expect(
-        find.byKey(const ValueKey('priority-label-t1')),
-        findsOneWidget,
-      );
+      expect(find.byKey(const ValueKey('priority-label-t1')), findsOneWidget);
     });
 
     testWidgets('空 description 不显示摘要行', (tester) async {
@@ -103,10 +96,12 @@ void main() {
       expect(find.text('无描述任务'), findsOneWidget);
       // 只有一张卡片：description 为空不渲染摘要；但 priority label 显示
       final texts = tester
-          .widgetList<Text>(find.descendant(
-            of: find.byType(TaskCard),
-            matching: find.byType(Text),
-          ))
+          .widgetList<Text>(
+            find.descendant(
+              of: find.byType(TaskCard),
+              matching: find.byType(Text),
+            ),
+          )
           .map((t) => t.data)
           .toList();
       // 非空文本 = 标题 + 优先级标签（低）；无 description 摘要

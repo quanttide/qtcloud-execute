@@ -15,7 +15,9 @@ import 'theme.dart';
 ///
 /// 规范对齐 qtcloud-delib（`QTCLOUD_DELIB_API_BASE_URL`）：生产指向系统级 API 网关
 /// `https://api.quanttide.com/qtcloud-execute`，由网关转发到 FC；应用层不做 CORS（网关负责）。
-const String _apiBaseUrlEnv = String.fromEnvironment('QTCLOUD_EXECUTE_API_BASE_URL');
+const String _apiBaseUrlEnv = String.fromEnvironment(
+  'QTCLOUD_EXECUTE_API_BASE_URL',
+);
 
 /// 默认 API 基地址：
 /// - `--dart-define=QTCLOUD_EXECUTE_API_BASE_URL` 显式指定（生产网关/真实设备）；

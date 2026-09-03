@@ -90,8 +90,8 @@ class BoardView extends StatelessWidget {
                 color: highlighted
                     ? theme.colorScheme.primary
                     : overWip
-                        ? theme.colorScheme.error
-                        : theme.colorScheme.outlineVariant,
+                    ? theme.colorScheme.error
+                    : theme.colorScheme.outlineVariant,
                 width: highlighted || overWip ? 2 : 1,
               ),
             ),

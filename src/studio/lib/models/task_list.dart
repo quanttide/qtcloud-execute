@@ -4,11 +4,7 @@ import 'task.dart';
 ///
 /// 任务直接属于清单（无分组层级）。
 class TaskList {
-  const TaskList({
-    required this.id,
-    required this.name,
-    required this.tasks,
-  });
+  const TaskList({required this.id, required this.name, required this.tasks});
 
   /// 从 JSON 解析；tasks 平铺在清单下
   factory TaskList.fromJson(Map<String, dynamic> json) => TaskList(

@@ -12,7 +12,9 @@ import 'package:qtcloud_execute_studio/widgets/task_detail_dialog.dart';
 /// 从测试夹具同步读取构建内存仓储（注入给应用，避免真实 asset 通道竞态）
 Future<TaskRepository> loadFixtureRepository() async {
   final String raw = File('test/fixtures/tasks.json').readAsStringSync();
-  return InMemoryTaskRepository.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+  return InMemoryTaskRepository.fromJson(
+    jsonDecode(raw) as Map<String, dynamic>,
+  );
 }
 
 Future<void> pumpApp(WidgetTester tester) async {
@@ -29,8 +31,7 @@ Finder columnCard(String statusWire, String taskId) => find.descendant(
 );
 
 void main() {
-  testWidgets('首页渲染：项目切换器 + 状态泳道看板（默认 qtdata）',
-      (tester) async {
+  testWidgets('首页渲染：项目切换器 + 状态泳道看板（默认 qtdata）', (tester) async {
     await pumpApp(tester);
 
     // 项目导航栏：独立切换器渲染三个项目，当前 qtdata 项存在
@@ -46,10 +47,7 @@ void main() {
 
     // 任务卡片落在对应状态列（inProgress 列）
     expect(find.text('客户项目结项推进'), findsOneWidget);
-    expect(
-      columnCard('inProgress', 'qtdata-project-closeout'),
-      findsOneWidget,
-    );
+    expect(columnCard('inProgress', 'qtdata-project-closeout'), findsOneWidget);
     // 空列占位（不空白）
     expect(find.text('暂无任务'), findsWidgets);
   });
@@ -120,8 +118,7 @@ void main() {
     expect(find.byType(TaskDetailDialog), findsNothing);
   });
 
-  testWidgets('弹窗状态变更：即改即存，看板即时刷新（任务跨列，自由来回）',
-      (tester) async {
+  testWidgets('弹窗状态变更：即改即存，看板即时刷新（任务跨列，自由来回）', (tester) async {
     await pumpApp(tester);
 
     await tester.tap(find.text('客户项目结项推进'));
@@ -132,22 +129,13 @@ void main() {
     await tester.pumpAndSettle();
 
     // 看板即时刷新：任务从 inProgress 列移到 reviewing 列（弹窗仍开着）
-    expect(
-      columnCard('inProgress', 'qtdata-project-closeout'),
-      findsNothing,
-    );
-    expect(
-      columnCard('reviewing', 'qtdata-project-closeout'),
-      findsOneWidget,
-    );
+    expect(columnCard('inProgress', 'qtdata-project-closeout'), findsNothing);
+    expect(columnCard('reviewing', 'qtdata-project-closeout'), findsOneWidget);
 
     // 回退到未开始（真看板自由来回——退回重做）
     await tester.tap(find.byKey(const ValueKey('status-notStarted')));
     await tester.pumpAndSettle();
-    expect(
-      columnCard('notStarted', 'qtdata-project-closeout'),
-      findsOneWidget,
-    );
+    expect(columnCard('notStarted', 'qtdata-project-closeout'), findsOneWidget);
   });
 
   testWidgets('弹窗描述编辑保存：弹窗关闭，看板卡片摘要即时更新', (tester) async {

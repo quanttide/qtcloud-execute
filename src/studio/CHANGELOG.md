@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## [0.1.0-beta.8] - 2026-09-03
+
+### Added
+
+- 任务详情面板新增「删除」按钮（红色、二次确认弹窗），删除后看板即时刷新；底层新增 `TaskRepository.deleteTask` + `BoardCubit.deleteTask` 对接 provider DELETE 端点
+
 ## [0.1.0-beta.7] - 2026-09-03
 
 ### Changed

@@ -7,12 +7,7 @@ import '../models/task.dart';
 /// 状态不在此显示（状态已由看板所在行表达，不重复）。
 /// 点击打开详情弹窗（[onTap]）；桌面端可拖拽跨列（[onDragEnd]）。
 class TaskCard extends StatelessWidget {
-  const TaskCard({
-    super.key,
-    required this.task,
-    this.onTap,
-    this.onDragEnd,
-  });
+  const TaskCard({super.key, required this.task, this.onTap, this.onDragEnd});
 
   /// 展示的任务
   final Task task;
