@@ -42,10 +42,10 @@ func main() {
 	h := task.NewHandler(repo)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /api/lists", h.ListLists)
-	mux.HandleFunc("GET /api/lists/{id}/tasks", h.ListTasks)
-	mux.HandleFunc("PUT /api/lists/{id}/tasks/{taskId}", h.UpdateTask)
-	mux.HandleFunc("DELETE /api/lists/{id}/tasks/{taskId}", h.DeleteTask)
+	mux.HandleFunc("GET /lists", h.ListLists)
+	mux.HandleFunc("GET /lists/{id}/tasks", h.ListTasks)
+	mux.HandleFunc("PUT /lists/{id}/tasks/{taskId}", h.UpdateTask)
+	mux.HandleFunc("DELETE /lists/{id}/tasks/{taskId}", h.DeleteTask)
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(`{"status":"ok"}`))

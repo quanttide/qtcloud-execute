@@ -93,13 +93,13 @@ struct List {
     tasks: Vec<Task>,
 }
 
-/// GET /api/lists 的响应包装
+/// GET /lists 的响应包装
 #[derive(Debug, Clone, Deserialize)]
 struct ListsResp {
     lists: Vec<List>,
 }
 
-/// GET /api/lists/{id}/tasks 的响应包装
+/// GET /lists/{id}/tasks 的响应包装
 #[derive(Debug, Clone, Deserialize)]
 struct TasksResp {
     tasks: Vec<Task>,
@@ -159,7 +159,7 @@ fn http_json(method: &str, url: &str, body: Option<&str>) -> Result<serde_json::
 
 /// 拉取某清单全部任务（用于 id 去重 / update 合并）
 fn http_tasks(base: &str, list_id: &str) -> Result<Vec<Task>, String> {
-    let v = http_json("GET", &format!("{base}/api/lists/{list_id}/tasks"), None)?;
+    let v = http_json("GET", &format!("{base}/lists/{list_id}/tasks"), None)?;
     let r: TasksResp = serde_json::from_value(v).map_err(|e| format!("解析任务响应失败: {e}"))?;
     Ok(r.tasks)
 }
@@ -200,9 +200,9 @@ fn ensure_update_fields(status: Option<&str>, priority: Option<&str>, descriptio
 
 // ─── 子命令实现 ───
 
-/// lists：GET /api/lists
+/// lists：GET /lists
 fn lists(base: &str, json: bool) {
-    let v = http_json("GET", &format!("{base}/api/lists"), None).unwrap_or_else(|e| exit_err(&e));
+    let v = http_json("GET", &format!("{base}/lists"), None).unwrap_or_else(|e| exit_err(&e));
     if json {
         println!("{}", serde_json::to_string(&v).unwrap());
         return;
@@ -218,7 +218,7 @@ fn lists(base: &str, json: bool) {
     }
 }
 
-/// tasks：GET /api/lists/{id}/tasks
+/// tasks：GET /lists/{id}/tasks
 fn tasks(base: &str, list_id: &str, status_filter: Option<&str>, json: bool) {
     if let Some(s) = status_filter {
         if let Err(e) = check_status(s) {
@@ -236,7 +236,7 @@ fn tasks(base: &str, list_id: &str, status_filter: Option<&str>, json: bool) {
         println!("{}", serde_json::to_string(&payload).unwrap());
         return;
     }
-    println!("── {list_id} ──  {base}/api/lists/{list_id}/tasks");
+    println!("── {list_id} ──  {base}/lists/{list_id}/tasks");
     let filtered: Vec<&Task> = tasks
         .iter()
         .filter(|t| status_filter.map(|s| t.status == s).unwrap_or(true))
@@ -299,7 +299,7 @@ fn add(
         priority: priority.to_string(),
     };
     let body = serde_json::to_string(&task).unwrap_or_else(|e| exit_err(&format!("序列化失败: {e}")));
-    let v = http_json("PUT", &format!("{base}/api/lists/{list_id}/tasks/{task_id}"), Some(&body))
+    let v = http_json("PUT", &format!("{base}/lists/{list_id}/tasks/{task_id}"), Some(&body))
         .unwrap_or_else(|e| exit_err(&e));
     if json {
         println!("{}", serde_json::to_string(&v).unwrap());
@@ -308,11 +308,11 @@ fn add(
     }
 }
 
-/// delete：DELETE /api/lists/{id}/tasks/{task_id}
+/// delete：DELETE /lists/{id}/tasks/{task_id}
 fn delete(base: &str, list_id: &str, task_id: &str, json: bool) {
     let v = http_json(
         "DELETE",
-        &format!("{base}/api/lists/{list_id}/tasks/{task_id}"),
+        &format!("{base}/lists/{list_id}/tasks/{task_id}"),
         None,
     )
     .unwrap_or_else(|e| exit_err(&e));
@@ -353,7 +353,7 @@ fn update(
     }
 
     let body = serde_json::to_string(&task).unwrap_or_else(|e| exit_err(&format!("序列化失败: {e}")));
-    let v = http_json("PUT", &format!("{base}/api/lists/{list_id}/tasks/{task_id}"), Some(&body))
+    let v = http_json("PUT", &format!("{base}/lists/{list_id}/tasks/{task_id}"), Some(&body))
         .unwrap_or_else(|e| exit_err(&e));
     if json {
         println!("{}", serde_json::to_string(&v).unwrap());

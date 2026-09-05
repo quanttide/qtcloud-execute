@@ -23,8 +23,8 @@ qtcloud-execute --server https://api.quanttide.com/qtcloud-execute lists
 
 | 命令 | 说明 |
 |------|------|
-| `lists` | 列出全部任务清单（`GET /api/lists`） |
-| `tasks <list_id> [--status <s>]` | 列出某清单任务，可按状态过滤（`GET /api/lists/{id}/tasks`） |
+| `lists` | 列出全部任务清单（`GET /lists`） |
+| `tasks <list_id> [--status <s>]` | 列出某清单任务，可按状态过滤（`GET /lists/{id}/tasks`） |
 | `add <list_id> <title> [--description] [--priority] [--status]` | 新增任务（ID 由 CLI 生成，`PUT` upsert） |
 | `update <list_id> <task_id> [--status] [--priority] [--description]` | 更新任务（先 GET 合并再 `PUT` 全量） |
 | `delete <list_id> <task_id>` | 删除任务（不可撤销） |

@@ -26,7 +26,7 @@
 
 ## lists
 
-列出全部任务清单及各自任务数。对应 `GET /api/lists`。
+列出全部任务清单及各自任务数。对应 `GET /lists`。
 
 ```bash
 qtcloud-execute lists [--json]
@@ -44,7 +44,7 @@ qtcloud-execute lists [--json]
 
 ## tasks
 
-列出某清单的任务，可按状态过滤。对应 `GET /api/lists/{id}/tasks`。
+列出某清单的任务，可按状态过滤。对应 `GET /lists/{id}/tasks`。
 
 ```bash
 qtcloud-execute tasks <清单ID> [--status <状态>] [--json]
@@ -57,14 +57,14 @@ qtcloud-execute tasks <清单ID> [--status <状态>] [--json]
 人类可读输出示例（标题/状态/优先级 + 下一行任务 ID 与描述）：
 
 ```
-── qtdata ──  http://localhost:8080/api/lists/qtdata/tasks
+── qtdata ──  http://localhost:8080/lists/qtdata/tasks
   客户项目复现                                 inProgress  high
       qtdata-reproduction  数据契约/蓝图/spec 已完成，数据清洗中
 ```
 
 ## add
 
-新增任务，任务 ID 由 CLI 自动生成（`<清单ID>-<unix秒>`，冲突时自增），通过 PUT upsert 写入。对应 `PUT /api/lists/{id}/tasks/{taskId}`。
+新增任务，任务 ID 由 CLI 自动生成（`<清单ID>-<unix秒>`，冲突时自增），通过 PUT upsert 写入。对应 `PUT /lists/{id}/tasks/{taskId}`。
 
 ```bash
 qtcloud-execute add <清单ID> <标题> [--status <状态>] [--priority <优先级>] [--description <描述>] [--json]
@@ -76,7 +76,7 @@ qtcloud-execute add <清单ID> <标题> [--status <状态>] [--priority <优先�
 
 ## update
 
-按任务 ID 更新字段，未提供的字段保持原值（先 GET 合并再 PUT 全量）。对应 `PUT /api/lists/{id}/tasks/{taskId}`。
+按任务 ID 更新字段，未提供的字段保持原值（先 GET 合并再 PUT 全量）。对应 `PUT /lists/{id}/tasks/{taskId}`。
 
 ```bash
 qtcloud-execute update <清单ID> <任务ID> [--status <状态>] [--priority <优先级>] [--description <描述>] [--json]
@@ -90,7 +90,7 @@ qtcloud-execute update <清单ID> <任务ID> [--status <状态>] [--priority <�
 
 ## delete
 
-删除任务，不可撤销。对应 `DELETE /api/lists/{id}/tasks/{taskId}`。
+删除任务，不可撤销。对应 `DELETE /lists/{id}/tasks/{taskId}`。
 
 ```bash
 qtcloud-execute delete <清单ID> <任务ID> [--json]

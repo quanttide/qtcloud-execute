@@ -16,7 +16,7 @@ func NewHandler(repo *Repository) *Handler {
 	return &Handler{repo: repo}
 }
 
-// ListLists 处理 GET /api/lists
+// ListLists 处理 GET /lists
 func (h *Handler) ListLists(w http.ResponseWriter, r *http.Request) {
 	lists, err := h.repo.ListLists()
 	if err != nil {
@@ -26,7 +26,7 @@ func (h *Handler) ListLists(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"lists": lists})
 }
 
-// ListTasks 处理 GET /api/lists/{id}/tasks
+// ListTasks 处理 GET /lists/{id}/tasks
 func (h *Handler) ListTasks(w http.ResponseWriter, r *http.Request) {
 	listID := r.PathValue("id")
 	tasks, err := h.repo.ListTasks(listID)
@@ -41,7 +41,7 @@ func (h *Handler) ListTasks(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"tasks": tasks})
 }
 
-// UpdateTask 处理 PUT /api/lists/{id}/tasks/{taskId}
+// UpdateTask 处理 PUT /lists/{id}/tasks/{taskId}
 func (h *Handler) UpdateTask(w http.ResponseWriter, r *http.Request) {
 	listID := r.PathValue("id")
 	taskID := r.PathValue("taskId")
@@ -69,7 +69,7 @@ func (h *Handler) UpdateTask(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"task": t})
 }
 
-// DeleteTask 处理 DELETE /api/lists/{id}/tasks/{taskId}
+// DeleteTask 处理 DELETE /lists/{id}/tasks/{taskId}
 func (h *Handler) DeleteTask(w http.ResponseWriter, r *http.Request) {
 	listID := r.PathValue("id")
 	taskID := r.PathValue("taskId")

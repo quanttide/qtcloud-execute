@@ -160,10 +160,10 @@ class InMemoryTaskRepository implements TaskRepository {
 /// 服务端 API 实现——运行时仓储：对接 provider（qtcloud-execute）REST API。
 ///
 /// 数据源在服务端（OSS），读写经：
-/// - `GET  /api/lists`                        → 全部清单（含任务）
-/// - `GET  /api/lists/{id}/tasks`             → 指定清单的任务
-/// - `PUT  /api/lists/{id}/tasks/{taskId}`    → 更新/新增任务（upsert）
-/// - `DELETE /api/lists/{id}/tasks/{taskId}`  → 删除任务
+/// - `GET  /lists`                        → 全部清单（含任务）
+/// - `GET  /lists/{id}/tasks`             → 指定清单的任务
+/// - `PUT  /lists/{id}/tasks/{taskId}`    → 更新/新增任务（upsert）
+/// - `DELETE /lists/{id}/tasks/{taskId}`  → 删除任务
 /// - `save()` 为无操作（服务端随 updateTask 落盘）
 class ApiTaskRepository implements TaskRepository {
   ApiTaskRepository({required String baseUrl, http.Client? client})
@@ -180,13 +180,13 @@ class ApiTaskRepository implements TaskRepository {
 
   @override
   Future<List<TaskList>> loadLists() async {
-    final json = await _getJson('/api/lists');
+    final json = await _getJson('/lists');
     return [for (final list in parseListsJson(json)) list.toTaskList()];
   }
 
   @override
   Future<List<Task>> loadTasks(String listId) async {
-    final json = await _getJson('/api/lists/$listId/tasks');
+    final json = await _getJson('/lists/$listId/tasks');
     return [
       for (final t in json['tasks'] as List<dynamic>)
         Task.fromJson(t as Map<String, dynamic>),
@@ -196,7 +196,7 @@ class ApiTaskRepository implements TaskRepository {
   @override
   Future<void> updateTask(String listId, Task task) async {
     final resp = await _client.put(
-      _uri('/api/lists/$listId/tasks/${task.id}'),
+      _uri('/lists/$listId/tasks/${task.id}'),
       headers: const {'Content-Type': 'application/json'},
       body: jsonEncode(task.toJson()),
     );
@@ -205,7 +205,7 @@ class ApiTaskRepository implements TaskRepository {
 
   @override
   Future<void> deleteTask(String listId, String taskId) async {
-    final resp = await _client.delete(_uri('/api/lists/$listId/tasks/$taskId'));
+    final resp = await _client.delete(_uri('/lists/$listId/tasks/$taskId'));
     _ensureOk(resp);
   }
 

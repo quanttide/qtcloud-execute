@@ -34,12 +34,12 @@
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/api/lists` | 列出全部清单（含各自任务） |
-| GET | `/api/lists/{id}/tasks` | 列出某清单的任务 |
-| PUT | `/api/lists/{id}/tasks/{taskId}` | 写入任务（upsert） |
-| DELETE | `/api/lists/{id}/tasks/{taskId}` | 删除任务 |
+| GET | `/lists` | 列出全部清单（含各自任务） |
+| GET | `/lists/{id}/tasks` | 列出某清单的任务 |
+| PUT | `/lists/{id}/tasks/{taskId}` | 写入任务（upsert） |
+| DELETE | `/lists/{id}/tasks/{taskId}` | 删除任务 |
 
-## GET /api/lists
+## GET /lists
 
 列出全部清单及其任务。
 
@@ -65,7 +65,7 @@
 }
 ```
 
-## GET /api/lists/{id}/tasks
+## GET /lists/{id}/tasks
 
 路径参数：`id` 清单 ID。
 
@@ -75,7 +75,7 @@
 
 - 404：清单不存在，响应体 `清单不存在`。
 
-## PUT /api/lists/{id}/tasks/{taskId}
+## PUT /lists/{id}/tasks/{taskId}
 
 写入任务，**upsert 语义**：清单内已有同 ID 任务则整体替换，否则追加。
 
@@ -99,7 +99,7 @@
 - 400：请求体解析失败，或路径 `taskId` 与请求体 `id` 不一致
 - 404：清单不存在
 
-## DELETE /api/lists/{id}/tasks/{taskId}
+## DELETE /lists/{id}/tasks/{taskId}
 
 删除任务，不可撤销。
 
