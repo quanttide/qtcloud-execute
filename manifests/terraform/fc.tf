@@ -64,10 +64,9 @@ resource "alicloud_fcv3_function" "this" {
   }
 
   # 对齐 provider 运行时约定（见 src/provider/cmd/server/main.go 与 internal/store/oss.go）：
-  # QTCLOUD_EXECUTE_STORE=oss 读 OSS 桶中 data/tasks.json；QTCLOUD_EXECUTE_DATA 为桶内对象键
+  # QTCLOUD_EXECUTE_STORE=oss 读 OSS 桶中任务数据（对象键默认值见 main.go）
   environment_variables = {
     QTCLOUD_EXECUTE_STORE    = "oss"
-    QTCLOUD_EXECUTE_DATA     = "data/tasks.json"
     QTCLOUD_EXECUTE_ADDR     = ":8080"
     ALIYUN_OSS_BUCKET        = alicloud_oss_bucket.data.bucket
     ALIYUN_OSS_ENDPOINT      = var.oss_endpoint
