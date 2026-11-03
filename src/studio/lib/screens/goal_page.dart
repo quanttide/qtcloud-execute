@@ -1,19 +1,25 @@
 import 'package:flutter/material.dart';
 
-/// 目标页：长期目标居顶，分解出的短期目标（关键结果）缩进其下。
+/// 目标页：一个 OKR 一张卡片，O 与 KR 明确标注。
 ///
-/// v0.1.x 内置内容（与 profile qtcloud「目标」一致）；服务端目标 API
+/// v0.1.x 内置内容（与 profile qtcloud / qtclass「目标」一致）；服务端目标 API
 /// 落地后改由仓储注入。进度由挂载任务的真实状态计算，不在本页写死。
 class GoalPage extends StatelessWidget {
   const GoalPage({super.key});
 
-  /// 长期目标
-  static const String longTermGoal = '量潮云成长为主营业务';
-
-  /// 短期目标（长期目标的关键结果）
-  static const List<String> shortTermGoals = [
-    '媒体云：原型变生产可用上线，获取第一个付费客户',
-    '执行云：原型变生产可用上线，获取第一个付费客户',
+  /// OKR 列表（一个 OKR 一张卡片），内容与 profile 各业务「目标」一致
+  static const List<(String objective, List<String> keyResults)> okrs = [
+    (
+      '量潮云成长为主营业务',
+      [
+        '媒体云：原型变生产可用上线，获取第一个付费客户',
+        '执行云：原型变生产可用上线，获取第一个付费客户',
+      ],
+    ),
+    (
+      '人才培养体系收支平衡',
+      ['量潮课堂产品为实训基地提供服务'],
+    ),
   ];
 
   @override
@@ -34,26 +40,70 @@ class GoalPage extends StatelessWidget {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              longTermGoal,
-              key: const ValueKey('long-term-goal'),
-              style: theme.textTheme.titleLarge,
-            ),
-            const SizedBox(height: 16),
-            for (final goal in shortTermGoals)
-              Padding(
-                padding: const EdgeInsets.only(left: 24, bottom: 12),
-                child: Text(
-                  goal,
-                  style: theme.textTheme.bodyLarge,
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          for (final (objective, keyResults) in okrs)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _tag(context, 'O'),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            objective,
+                            key: const ValueKey('objective'),
+                            style: theme.textTheme.titleLarge,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    for (final kr in keyResults)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _tag(context, 'KR'),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                kr,
+                                style: theme.textTheme.bodyLarge,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
                 ),
               ),
-          ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// O / KR 标签：小色块，层级一眼可辨。
+  Widget _tag(BuildContext context, String text) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        text,
+        style: theme.textTheme.labelMedium?.copyWith(
+          color: theme.colorScheme.onPrimaryContainer,
         ),
       ),
     );

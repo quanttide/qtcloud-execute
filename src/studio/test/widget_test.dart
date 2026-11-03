@@ -115,6 +115,12 @@ void main() {
       find.text('执行云：原型变生产可用上线，获取第一个付费客户'),
       findsOneWidget,
     );
+    // 第二张卡片：量潮课堂 OKR
+    expect(find.text('人才培养体系收支平衡'), findsOneWidget);
+    expect(find.text('量潮课堂产品为实训基地提供服务'), findsOneWidget);
+    // O / KR 标注清楚：两个 O、三个 KR
+    expect(find.text('O'), findsNWidgets(2));
+    expect(find.text('KR'), findsNWidgets(3));
 
     // 切回任务看板（分区保活后首页仍是看板）
     await tester.tap(find.text('任务'));
