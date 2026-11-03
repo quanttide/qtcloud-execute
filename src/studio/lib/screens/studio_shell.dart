@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'goal_page.dart';
 import 'task_list_screen.dart';
 
-/// 侧边导航壳：目标（规划中）/ 任务（看板首页）/ 设置（底部图标）。
+/// 侧边导航壳：目标页 / 任务（看板首页）/ 设置（底部图标）。
 ///
 /// 惯例对齐 qtcloud-media-studio 的 StudioShell：NavigationRail 两分区 +
 /// trailing 设置入口，IndexedStack 保活各分区。
@@ -69,7 +70,7 @@ class _StudioShellState extends State<StudioShell> {
             child: IndexedStack(
               index: _settings ? 2 : _index,
               children: const [
-                _PlaceholderPage(title: '目标'),
+                GoalPage(),
                 TaskListScreen(),
                 _PlaceholderPage(title: '设置'),
               ],
@@ -81,7 +82,7 @@ class _StudioShellState extends State<StudioShell> {
   }
 }
 
-/// 预留分区页：目标、设置尚未开发（惯例同 qtcloud-media-studio 的 PlaceholderPage）。
+/// 预留分区页：设置尚未开发（惯例同 qtcloud-media-studio 的 PlaceholderPage）。
 class _PlaceholderPage extends StatelessWidget {
   const _PlaceholderPage({required this.title});
 

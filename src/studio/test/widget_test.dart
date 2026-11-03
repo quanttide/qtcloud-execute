@@ -99,6 +99,29 @@ void main() {
     expect(find.text('实训基地招聘运营'), findsOneWidget);
   });
 
+  testWidgets('侧边导航：目标页展示长期目标与分解的短期目标', (tester) async {
+    await pumpApp(tester);
+
+    // 切到目标分区
+    await tester.tap(find.text('目标'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('量潮云成长为主营业务'), findsOneWidget);
+    expect(
+      find.text('媒体云：原型变生产可用上线，获取第一个付费客户'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('执行云：原型变生产可用上线，获取第一个付费客户'),
+      findsOneWidget,
+    );
+
+    // 切回任务看板（分区保活后首页仍是看板）
+    await tester.tap(find.text('任务'));
+    await tester.pumpAndSettle();
+    expect(find.text('执行云看板'), findsOneWidget);
+  });
+
   testWidgets('点击卡片打开详情弹窗（就地操作，不跳页）', (tester) async {
     await pumpApp(tester);
 
