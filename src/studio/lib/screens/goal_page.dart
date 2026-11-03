@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// 目标页：一个 OKR 一张卡片，O 与 KR 明确标注。
 ///
-/// v0.1.x 内置内容（与 profile qtcloud / qtclass「目标」一致）；服务端目标 API
+/// v0.1.x 内置内容（参考 profile 各业务「目标」）；服务端目标 API
 /// 落地后改由仓储注入。进度由挂载任务的真实状态计算，不在本页写死。
 class GoalPage extends StatelessWidget {
   const GoalPage({super.key});
@@ -17,8 +17,11 @@ class GoalPage extends StatelessWidget {
       ],
     ),
     (
-      '人才培养体系收支平衡',
-      ['量潮课堂产品为实训基地提供服务'],
+      '量潮课堂实现人才培养体系的收支平衡',
+      [
+        '产品在实训基地能用',
+        '能在浙理工校企合作用',
+      ],
     ),
   ];
 

@@ -116,11 +116,12 @@ void main() {
       findsOneWidget,
     );
     // 第二张卡片：量潮课堂 OKR
-    expect(find.text('人才培养体系收支平衡'), findsOneWidget);
-    expect(find.text('量潮课堂产品为实训基地提供服务'), findsOneWidget);
-    // O / KR 标注清楚：两个 O、三个 KR
+    expect(find.text('量潮课堂实现人才培养体系的收支平衡'), findsOneWidget);
+    expect(find.text('产品在实训基地能用'), findsOneWidget);
+    expect(find.text('能在浙理工校企合作用'), findsOneWidget);
+    // O / KR 标注清楚：两个 O、四个 KR
     expect(find.text('O'), findsNWidgets(2));
-    expect(find.text('KR'), findsNWidgets(3));
+    expect(find.text('KR'), findsNWidgets(4));
 
     // 切回任务看板（分区保活后首页仍是看板）
     await tester.tap(find.text('任务'));
