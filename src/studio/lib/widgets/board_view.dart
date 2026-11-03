@@ -146,7 +146,7 @@ class BoardView extends StatelessWidget {
   ) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 10, 4, 10),
+      padding: const EdgeInsets.fromLTRB(8, 10, 4, 10),
       child: Row(
         children: [
           Expanded(
@@ -160,7 +160,7 @@ class BoardView extends StatelessWidget {
           if (limit != null)
             Container(
               key: ValueKey('wip-badge-${status.wire}'),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
               decoration: BoxDecoration(
                 color: overWip
                     ? theme.colorScheme.errorContainer
@@ -187,6 +187,7 @@ class BoardView extends StatelessWidget {
           if (onCreateTask != null)
             IconButton(
               key: ValueKey('create-task-${status.wire}'),
+              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
               iconSize: 18,
               tooltip: '新增任务',
               icon: const Icon(Icons.add),
