@@ -7,7 +7,7 @@
 - 本地：`http://localhost:8080`（环境变量 `QTCLOUD_EXECUTE_ADDR` 可覆盖监听地址）
 - 生产：`https://api.quanttide.com/qtcloud-execute`（系统级 API 网关转发到 FC，客户端默认地址）
 
-健康检查：`GET /health`，返回 200 `{"status":"ok"}`（text/plain）。
+健康检查：`GET /healthz`，返回 200 `{"status":"ok"}`（text/plain）。
 
 ## 数据模型
 

@@ -2,6 +2,12 @@
 
 本文件仅记录 **provider（量潮任务执行服务端，Go + FC 3.0）** 的版本变更。studio / cli 各自维护自己的 CHANGELOG。
 
+## [未发布]
+
+### Changed
+
+- 健康检查端点 `/health` → `/healthz`（源码与 API 文档同步）
+
 ## [0.1.0] - 2026-09-03
 
 ### 首个正式版
